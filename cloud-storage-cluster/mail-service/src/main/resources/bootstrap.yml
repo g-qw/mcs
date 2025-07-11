@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: mail-service
+  cloud:
+    nacos:
+      discovery:
+        service: mail-service
+        namespace: 9b73010a-162b-4933-8fa1-4549319b8a8d
+      config:
+        server-addr: localhost:8848
+        file-extension: yaml
+        group: DEFAULT_GROUP
+        import-check:
+          enabled: false

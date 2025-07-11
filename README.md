@@ -1,14 +1,6 @@
-<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Don't forget to give the project a star!
-*** Thanks again! Now go create something AMAZING! :D
--->
 
-
+### [简体中文](https://github.com/g-qw/mcs/blob/main/README.md) | [English](https://github.com/g-qw/mcs/blob/main/README.en.md)
 
 <!-- PROJECT SHIELDS -->
 <!--
@@ -25,231 +17,316 @@
 [![Unlicense License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
-
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://github.com/g-qw/mcs">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Best-README-Template</h3>
+  <h3 align="center">Minio Cloud Storage</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    基于MinIO构建的Web云存储系统，旨在提供响应迅速、高性能和高并发的存储和浏览体验。
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/g-qw/mcs"><strong>探索文档 »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
+    <a href="https://github.com/g-qw/mcs">查看演示</a>
     &middot;
-    <a href="https://github.com/othneildrew/Best-README-Template/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/g-qw/mcs/issues/new/choose">报告问题</a>
     &middot;
-    <a href="https://github.com/othneildrew/Best-README-Template/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/g-qw/mcs/issues/new/choose">请求功能</a>
   </p>
 </div>
 
-
-
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
-
-
+- [关于项目](#关于项目)
+  - [支持的功能](#支持的功能)
+  - [项目目标](#项目目标)
+  - [技术栈](#技术栈)
+- [开始使用](#开始使用)
+  - [前提条件](#前提条件)
+  - [安装步骤](#安装步骤)
+- [使用方法](#使用方法)
+- [性能测试](#性能测试)
+  - [JMeter 压力测试](#jmeter-压力测试)
+- [路线图](#路线图)
+- [贡献指南](#贡献指南)
+  - [主要贡献者](#主要贡献者)
+- [许可协议](#许可协议)
+- [联系方式](#联系方式)
+- [致谢](#致谢)
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+## 关于项目
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+MinIO 是一款开源的高性能分布式对象存储系统，此项目基于 MinIO 构建了一个微服务的云存储系统。整个系统采用 Spring Boot 技术栈构建，运用了流行的微服务架构，涵盖用户服务、邮箱服务、上传服务、下载服务、文件系统服务以及网关服务，用于身份校验和负载均衡。在前端，使用 Vue 3 搭建了一个类似 GitHub 风格的 Web UI，旨在为用户提供类似 Windows 文件资源管理器的便捷体验。整个 UI 设计简洁线性，操作流畅自然，使用起来真的很酷！
 
-There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
+### 支持的功能
 
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should implement DRY principles to the rest of your life :smile:
+- 响应式、支持并发的文件上传和下载
+- 支持单文件上传、多文件上传、分块上传
+- 支持单文件下载、分块下载
+- 在上传和下载文件时自动选择合适的方式上传
+- 虚拟的文件系统，支持文件的删除，文件夹的创建和修改名称，空文件夹的删除
 
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have contributed to expanding this template!
+### 项目目标
 
-Use the `BLANK_README.md` to get started.
+浏览器功能强大，但尚未被充分利用来解决文件预览和娱乐需求。如果基于浏览器为云盘文件添加预览功能，云存储服务就能从简单的存储工具升级为全方位的生态系统。用户可在浏览器中预览各类文件，无需切换软件，节省时间和精力，避免兼容性问题。
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+而且，云存储系统可以通过集成强大程序来强化服务。比如用 FFmpeg 处理图片、视频、音乐、文档等文件，实现转码、裁剪、编辑等功能。同时，集成开源文档编辑器、图片查看器和代码编辑器等应用，让用户在浏览器中完成文件预览、编辑和处理。此外，结合爬虫技术，可以实现自动化的数据收集和整理，帮助用户从互联网上抓取有价值的信息并存储到云盘中，进一步丰富云存储的内容和应用场景，打造一个功能强大且全面的云存储生态系统，满足用户多样化的需求。
 
+实现这些目标确实不容易，技术、资源、时间等方面都有挑战。但是我期待有一天能够实现，希望有兴趣的朋友可以加入我们一起开发！
 
+[![Minio Cloud Storage Screen Shot][product-screenshot]](https://github.com/g-qw/mcs)
 
-### Built With
+<p align="right"><a href="#readme-top">↑</a></p>
 
-This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
+### 技术栈
 
-* [![Next][Next.js]][Next-url]
-* [![React][React.js]][React-url]
-* [![Vue][Vue.js]][Vue-url]
-* [![Angular][Angular.io]][Angular-url]
-* [![Svelte][Svelte.dev]][Svelte-url]
-* [![Laravel][Laravel.com]][Laravel-url]
-* [![Bootstrap][Bootstrap.com]][Bootstrap-url]
-* [![JQuery][JQuery.com]][JQuery-url]
+这是目前使用到的技术栈：
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- [![Spring Boot][SpringBoot]][SpringBoot-url]
+- [![Spring WebFlux][SpringWebFlux]][SpringWebFlux-url]
+- [![Spring Gateway][SpringGateway]][SpringGateway-url]
+- [![MyBatis][MyBatis]][MyBatis-url]
+- [![Redis][Redis]][Redis-url]
+- [![Vue 3][Vue3]][Vue3-url]
 
+<!-- URLs -->
+[SpringBoot]: https://img.shields.io/badge/SpringBoot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white
+[SpringBoot-url]: https://spring.io/projects/spring-boot
+[SpringWebFlux]: https://img.shields.io/badge/Spring%20WebFlux-6DB33F?style=for-the-badge&logo=spring&logoColor=white
+[SpringWebFlux-url]: https://spring.io/projects/spring-webflux
+[SpringGateway]: https://img.shields.io/badge/Spring%20Gateway-6DB33F?style=for-the-badge&logo=spring&logoColor=white
+[SpringGateway-url]: https://spring.io/projects/spring-cloud-gateway
+[MyBatis]: https://img.shields.io/badge/MyBatis-007991?style=for-the-badge&logo=mybatis&logoColor=white
+[MyBatis-url]: https://mybatis.org/
+[Redis]: https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white
+[Redis-url]: https://redis.io/
+[Vue3]: https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white
+[Vue3-url]: https://vuejs.org/
 
+<p align="right"><a href="#readme-top">↑</a></p>
 
 <!-- GETTING STARTED -->
-## Getting Started
+## 开始使用
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+以下是一个关于如何在本地设置项目的示例说明。按照这些简单的示例步骤，即可在本地运行副本。
 
-### Prerequisites
+### 前提条件
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+我将在下面列出构建此项目所需要的基础服务组件和依赖，需要注意本项目是在 Windows 进行的开发工作：
 
-### Installation
+- [nacos-server-2.5.0](https://nacos.io/download/release-history/?spm=5238cd80.6a33be36.0.0.10651e5dOU7bmS)
 
-_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
+- [postgresql-15.13-2](https://www.postgresql.org/download/)
+  - [postgresql zip archive](https://www.enterprisedb.com/download-postgresql-binaries)
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/github_username/repo_name.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
-5. Change git remote url to avoid accidental pushes to base project
-   ```sh
-   git remote set-url origin github_username/repo_name
-   git remote -v # confirm the changes
-   ```
+- [Redis 8.0.3 for Windows](https://github.com/redis-windows/redis-windows/releases/tag/8.0.3)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- [MinIO Server & MinIO Client](https://www.minio.org.cn/download.shtml#/windows)
 
+- [Node.js v20.3.1](https://nodejs.org/zh-cn/download)
 
+### 安装步骤
+
+以下是在 Windows 系统中安装部署本项目的详细步骤：
+
+(1) 将项目克隆到本地
+
+```bash
+git clone <git@github.com>:g-qw/mcs.git
+```
+
+(2) 安装并初始化 postgresql。我使用是zip版本的postgresql Windows版本，在 pgsql 的解压目录执行以下内容完成 pgsql 的初始化(注意替换成你的安装目录)：
+
+```bash
+cd path/to/pgsql
+mkdir data
+initdb -D "./data" -U postgres -A password -W
+```
+
+启动 pgsql:
+
+```bash
+cd ./bin && pg_ctl -D ../data -l ../logs/logfile.txt start
+```
+
+停止 pgsql:
+
+```bash
+cd ./bin && pg_ctl -D ../data stop
+```
+
+执行项目中 `init/db_init.sql` 初始化数据库
+
+(3) 初始 minio，在你的 minio 的安装目录(包含`mc`、`minio`的路径)执行以下操作
+
+创建你的密码文件 `.pwd`，你可以在启动前编辑此文件来修改管理员密码：
+
+```bash
+echo "minio_password" > .pwd
+```
+
+每次可以通过此 bat 脚本来启动 `minio`，启动的 `minio` 包含一个用户名为 `minio_admin`，密码为 `.pwd` 内容的超级用户：
+
+```bash
+@echo off
+set MINIO_ROOT_USER=minio_admin
+set /p MINIO_ROOT_PASSWORD=<.pwd
+minio.exe server ./data --address 127.0.0.1:9000 --console-address 127.0.0.1:9090
+pause
+```
+
+(4) 为你的 `Redis` 添加密码，在 `redis.conf` 添加配置：
+
+```bash
+requirepass "your_password"
+```
+
+双击 `redis` 安装目录的 `start.bat` 启动 `redis`。
+
+(5) 启动你的 Nacos，在本地我们使用单机启动，在 nacos 的 `bin` 目录运行：
+
+```bash
+.\startup.cmd -m standalone
+```
+
+(6) 确保中间件启动完毕，使用 IDEA 打开本项目，使用 Maven 在父项目 `cloud-storage-cluster` 安装项目需要的所有依赖，并修改各项目的配置，然后你可以启动项目的所有服务。
+
+(7) 启动 Web UI，在项目的 `/webapp/cloud-storage-vue` 执行以下操作：
+
+安装依赖：
+
+```bash
+npm install
+```
+
+启动 Web UI：
+
+```bash
+npm run dev
+```
+
+在浏览器访问 `http://localhost:5173/`
+
+<p align="right"><a href="#readme-top">↑</a></p>
 
 <!-- USAGE EXAMPLES -->
-## Usage
+## 使用方法
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+- 上传文件
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+![上传文件](./images/usage/upload_files.gif)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+- 下载文件
 
+![下载文件](./images/usage/download_files.gif)
 
+- 切换目录
+
+![切换目录](./images/usage/switch_path.gif)
+
+- 批量删除文件
+
+![批量删除文件](./images/usage/batch_delete_files.gif)
+
+- 下载选中的文件
+
+![下载选中的文件](./images/usage/download_selected_files.gif)
+
+- 右键选项菜单，对选中的文件批量下载和删除
+
+![右键选项菜单](./images/usage/context_menu.gif)
+
+<p align="right"><a href="#readme-top">↑</a></p>
+
+## 性能测试
+
+### JMeter 压力测试
+
+测试背景：
+
+- JVM 调优：false
+- JVM 堆内存：4G
+- 线程池的阻塞队列容量：256
+- 硬件：Ryzen 7 5800H，16 GB，SAMSUNG MZVL2512HCJQ-00B00
+
+以下是 JMeter 压力测试数据：
+
+| 测试场景       | 单文件大小 | 文件数量 | 总请求数 | 持续时间 (s) | 请求速率 (qps) | 文件速率 (fps) |
+| -------------- | ---------- | -------- | -------- | ------------ | -------------- | -------------- |
+| 单文件上传     | 100 KB     | 1        | 250 000  | 2 208        | 113            | 113            |
+| 单文件上传     | 1 MB       | 1        | 25 000   | 465          | 53.76          | 53.76          |
+| 单文件上传     | 5 MB       | 1        | 250      | 24           | 10.4           | 10.4           |
+| 单文件上传     | 5 MB       | 1        | 2 500    | 190          | 13.1           | 13.1           |
+| 多文件并行上传 | 3 MB       | 10       | 10 000   | 743          | 1.3            | 134.5          |
+
+> 注：fps（files per second）= 总文件数 / 持续时间。  
+> 多文件场景下，每个请求携带 10 个文件，因此文件速率远高于请求速率。
+
+<p align="right"><a href="#readme-top">↑</a></p>
 
 <!-- ROADMAP -->
-## Roadmap
+## 路线图
 
-- [x] Add Changelog
-- [x] Add back to top links
-- [ ] Add Additional Templates w/ Examples
-- [ ] Add "components" document to easily copy & paste sections of the readme
-- [ ] Multi-language Support
-    - [ ] Chinese
-    - [ ] Spanish
+- [ ] 添加文件夹的大小显示
+- [ ] 添加文件夹的zip打包下载
+- [ ] 添加文件的拖拽移动
+- [ ] 添加文件的复制和剪切
+- [ ] 添加用户的信息显示
+- [ ] 优化下载任务窗口的拖拽功能
+- [ ] 支持文本文件的浏览
+- [ ] 支持代码文件的高亮浏览
 
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
+查看[未解决的问题](https://github.com/g-qw/mcs/issues)，以获取完整的提议功能列表（以及已知问题）。
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
+<p align="right"><a href="#readme-top">↑</a></p>
 
 <!-- CONTRIBUTING -->
-## Contributing
+## 贡献指南
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+贡献是让开源社区成为学习、启发和创造的绝佳场所的原因。您所做的任何贡献都**非常受人欢迎**。
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+如果您有能让这个项目变得更好的建议，请分叉（fork）仓库并创建一个拉取请求（pull request）。您也可以直接打开一个标记为“enhancement”的问题。别忘了给项目点个星标（star）！再次感谢！
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. 分叉（Fork）项目
+2. 创建您的功能分支（`git checkout -b feature/AmazingFeature`）
+3. 提交您的更改（`git commit -m 'Add some AmazingFeature'`）
+4. 推送到分支（`git push origin feature/AmazingFeature`）
+5. 打开一个拉取请求
 
-### Top contributors:
+### 主要贡献者
 
-<a href="https://github.com/othneildrew/Best-README-Template/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=othneildrew/Best-README-Template" alt="contrib.rocks image" />
-</a>
+暂无
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
+<p align="right"><a href="#readme-top">↑</a></p>
 
 <!-- LICENSE -->
-## License
+## 许可协议
 
-Distributed under the Unlicense License. See `LICENSE.txt` for more information.
+根据无版权许可（Unlicense）授权。更多详情请查看 LICENSE.txt 文件。
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
+<p align="right"><a href="#readme-top">↑</a></p>
 
 <!-- CONTACT -->
-## Contact
+## 联系方式
 
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
+zzqw - [@Zhihu](https://www.zhihu.com/people/13-47-79-44)
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
+<p align="right"><a href="#readme-top">↑</a></p>
 
 <!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
+## 致谢
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+- [Minio的开源支持](https://min.io/)
 
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
+<p align="right"><a href="#readme-top">↑</a></p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+
 [contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
 [contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
@@ -263,19 +340,3 @@ Use this space to list resources you find helpful and would like to give credit 
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/othneildrew
 [product-screenshot]: images/screenshot.png
-[Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
-[Next-url]: https://nextjs.org/
-[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
-[React-url]: https://reactjs.org/
-[Vue.js]: https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
-[Vue-url]: https://vuejs.org/
-[Angular.io]: https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white
-[Angular-url]: https://angular.io/
-[Svelte.dev]: https://img.shields.io/badge/Svelte-4A4A55?style=for-the-badge&logo=svelte&logoColor=FF3E00
-[Svelte-url]: https://svelte.dev/
-[Laravel.com]: https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white
-[Laravel-url]: https://laravel.com
-[Bootstrap.com]: https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white
-[Bootstrap-url]: https://getbootstrap.com
-[JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
-[JQuery-url]: https://jquery.com 

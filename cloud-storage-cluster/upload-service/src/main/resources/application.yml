@@ -1,0 +1,37 @@
+server:
+  port: 8102
+
+minio:
+  endpoint: http://127.0.0.1:9000
+  # accessKey 和 secretKey 在程序参数配置
+
+spring:
+  main:
+    web-application-type: reactive # 响应式编程模型
+  application:
+    name: upload-service
+
+  # nacos 配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+  # redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password 在程序实参中添加 redis 密码
+      database: 1
+      lettuce:
+        pool:
+          max-idle: 128 # 最大空闲连接数
+          max-active: 256 # 最大活跃连接数
+          min-idle: 64 # 最小空闲连接数
+          max-wait: 100ms # 最大等待时间
+
+logging:
+  level:
+    # root: info
+    root: OFF

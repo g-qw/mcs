@@ -1,0 +1,41 @@
+server:
+  port: 8101
+
+spring:
+  application:
+    name: mail-service
+
+  # nacos 配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+  # 邮件服务器配置
+  mail:
+    host: smtp.163.com
+    port: 587
+    username: passfort@163.com
+    protocol: smtp
+    default-encoding: UTF-8
+    test-connection: true
+    ssl:
+      enabled: true
+
+  # redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password 在程序实参中设置 redis 密码
+      database: 1
+      lettuce:
+        pool:
+          max-idle: 128 # 最大空闲连接数
+          max-active: 256 # 最大活跃连接数
+          min-idle: 64 # 最小空闲连接数
+          max-wait: 100ms # 最大等待时间
+
+logging:
+  level:
+    root: INFO

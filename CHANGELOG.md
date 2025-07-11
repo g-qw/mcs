@@ -1,35 +1,21 @@
-# Changelog
+### [简体中文](https://github.com/g-qw/mcs/blob/main/CHANGELOG.md) | [English](https://github.com/g-qw/mcs/blob/main/CHANGELOG.en.md)
 
-## v1.1.2
-
-### Added or Changed
-- Change license to Unlicense; releasing the project fully into the public domain
-- Add simplified project cover image
-
-
-## v1.1.1
-
-### Added or Changed
-- Fixed back to top alignment (revert changes)
-
-
-## v1.1.0
-
-### Added or Changed
-- Fixed back to top link alignment deprecated tag, use CSS style instead
-- Added contrib.rocks to show top contributors
-
+# 更新日志
 
 ## v1.0.0
 
-### Added or Changed
-- Added this changelog :)
-- Fixed typos in both templates
-- Back to top links
-- Added more "Built With" frameworks/libraries
-- Changed table of contents to start collapsed
-- Added checkboxes for major features on roadmap
+### 新增
 
-### Removed
-
-- Some packages/libraries from acknowledgements I no longer use
+* 基于 MinIO 的高性能分布式对象存储微服务系统首个正式版本
+  * 后端微服务架构
+    * 用户服务（身份注册、登录、权限管理）
+    * 邮箱服务（验证码、通知邮件）
+    * 上传服务（单文件、多文件、分块上传）
+    * 下载服务（单文件、分块下载，断点续传）
+    * 文件系统服务（虚拟目录树、文件/文件夹 CRUD、空文件夹清理）
+    * 网关服务（统一身份校验、动态路由、负载均衡）
+  * 前端
+    * Vue 3 + Vite 构建的响应式 Web UI，GitHub 风格深色主题
+    * 仿 Windows 文件资源管理器的交互
+    * 根据文件大小自动选择合适的上传/下载策略
+    * 实时进度条、并发上传/下载，下载任务窗口

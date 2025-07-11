@@ -1,0 +1,65 @@
+server:
+  port: 8104
+
+minio:
+  endpoint: http://127.0.0.1:9000
+  # accessKey 和 secretKey 在程序参数配置
+
+spring:
+  application:
+    name: file-system
+
+  # 数据库配置
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cloud_storage_cluster
+    username: postgres
+    # password 在程序实参配置 postgresql 的密码
+    driver-class-name: org.postgresql.Driver
+
+    # HikariCP数据库连接池配置
+    hikari:
+      connection-timeout: 30000 # 连接超时时间（毫秒），30秒
+      idle-timeout: 600000 # 空闲连接超时时间（毫秒）,10分钟
+      max-lifetime: 1800000 # 最大连接生命周期（毫秒），30分钟
+      maximum-pool-size: 10 # 最大连接数
+      minimum-idle: 5 # 最小空闲连接数
+      initialization-fail-timeout: 1000 # 初始化失败超时时间（毫秒），1秒
+      leak-detection-threshold: 2000 # 泄露检测阈值（毫秒），2秒
+      auto-commit: true # 是否自动提交事务
+      pool-name: HikariCP_cloud_storage # 连接池名称
+
+  # nacos 配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+
+  # redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password 在程序实参中添加 redis 密码
+      database: 1
+      lettuce:
+        pool:
+          max-idle: 128 # 最大空闲连接数
+          max-active: 256 # 最大活跃连接数
+          min-idle: 64 # 最小空闲连接数
+          max-wait: 100ms # 最大等待时间
+
+# MyBatis配置
+mybatis:
+  type-aliases-package: org.cloud.user.model # 实体类包路径
+  mapper-locations: classpath:mappers/*.xml # Mapper XML文件路径
+  configuration:
+    # log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 打印SQL语句到控制台
+    map-underscore-to-camel-case: true # 自动驼峰命名规则映射
+    cache-enabled: false # 禁用二级缓存
+    lazy-loading-enabled: true # 启用延迟加载
+    aggressive-lazy-loading: false # 禁用激进的延迟加载
+
+logging:
+  level:
+    root: info
+    sql: info

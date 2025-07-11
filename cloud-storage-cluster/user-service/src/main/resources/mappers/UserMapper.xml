@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.cloud.user.mappers.UserMapper">
+
+    <select id="selectById" parameterType="java.util.UUID" resultType="org.cloud.user.model.User">
+        SELECT * FROM users WHERE user_id = #{userId}
+    </select>
+
+    <select id="selectByEmail" parameterType="java.lang.String" resultType="org.cloud.user.model.User">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="selectByUsername" parameterType="java.lang.String" resultType="org.cloud.user.model.User">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <select id="selectUsedCapacity" parameterType="java.util.UUID"  resultType="java.math.BigDecimal">
+        SELECT used_capacity FROM users WHERE user_id = #{userId}
+    </select>
+
+    <select id="selectUserStatus" parameterType="java.util.UUID" resultType="java.lang.String">
+        SELECT user_status FROM users WHERE user_id = #{userId}
+    </select>
+
+    <!-- 创建用户 -->
+    <insert id="insertUser" parameterType="org.cloud.user.model.User" useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO users (email, username, password_hash)
+        VALUES (#{email}, #{username}, #{passwordHash})
+    </insert>
+
+    <!-- 更新整个用户数据 -->
+    <update id="updateUser" parameterType="org.cloud.user.model.User">
+        UPDATE users
+        SET email = #{email},
+            username = #{username},
+            created_at = #{createdAt},
+            last_login_at = #{lastLoginAt},
+            user_status = #{userStatus},
+            role = #{role},
+            storage_capacity = #{storageCapacity},
+            used_capacity = #{usedCapacity},
+            bio = #{bio},
+            avatar = #{avatar}
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 更新用户登录时间 -->
+    <update id="updateLastLoginAt" parameterType="java.lang.String">
+        UPDATE users SET last_login_at = NOW() WHERE email = #{email}
+    </update>
+
+    <!-- 更新用户密码 -->
+    <update id="updatePassword" parameterType="map">
+        UPDATE users SET password_hash = #{passwordHash} WHERE email = #{email}
+    </update>
+    <update id="updateUsedCapacity" parameterType="map">
+        UPDATE users SET used_capacity = #{usedCapacity} WHERE user_id = #{userId}
+    </update>
+
+    <update id="updateUserStatus" parameterType="map">
+        UPDATE users SET user_status = #{userStatus} WHERE user_id = #{userId}
+    </update>
+
+    <!-- 删除用户 -->
+    <delete id="deleteUser" parameterType="java.util.UUID">
+        DELETE FROM users WHERE user_id = #{userId}
+    </delete>
+</mapper>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.cloud.fs.mappers.DirectoryMapper">
+
+    <!-- 创建目录 -->
+    <insert id="createDirectory" parameterType="map">
+        INSERT INTO directories (parent_directory_id, user_id, name)
+        VALUES ( #{parentDirectoryId}, #{userId}, #{name})
+    </insert>
+
+    <!-- 删除目录 -->
+    <delete id="deleteDirectory" parameterType="java.util.UUID">
+        DELETE FROM directories WHERE directory_id = #{directoryId}
+    </delete>
+
+    <!-- 更新目录信息, 只更新会变化的字段 -->
+    <update id="updateDirectory" parameterType="map">
+        UPDATE directories
+        SET parent_directory_id = #{parentDirectoryId},
+            user_id = #{userId},
+            name = #{name},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE directory_id = #{directoryId}
+    </update>
+
+    <update id="updateDirectoryName" parameterType="map">
+        UPDATE directories
+        SET name = #{name},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE directory_id = #{directoryId}
+    </update>
+
+    <!-- 移动目录 -->
+    <update id="moveDirectory" parameterType="map">
+        UPDATE directories
+        SET parent_directory_id = #{parentDirectoryId}
+        WHERE directory_id = #{directoryId}
+    </update>
+
+    <!-- 查询目录是否存在 -->
+    <select id="isDirectoryExist" resultType="java.lang.Boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM directories
+            WHERE directory_id = #{directoryId}
+        ) AS directory_exists;
+    </select>
+
+    <!-- 根据目录ID查询目录 -->
+    <select id="getDirectoryById" parameterType="java.util.UUID" resultType="org.cloud.fs.model.MinioDirectory">
+        SELECT *
+        FROM directories
+        WHERE directory_id = #{directoryId}
+    </select>
+
+    <!-- 查询指定用户的根目录 -->
+    <select id="getRootDirectory" parameterType="java.util.UUID" resultType="org.cloud.fs.model.MinioDirectory">
+        SELECT *
+        FROM directories
+        WHERE user_id = #{userId}
+        AND parent_directory_id IS NULL AND name = '/'
+    </select>
+
+    <!-- 查询指定目录ID的目录 -->
+    <select id="getDirectory" parameterType="java.util.UUID" resultType="org.cloud.fs.model.MinioDirectory">
+        SELECT *
+        FROM directories
+        WHERE directory_id = #{directoryId}
+    </select>
+
+    <!-- 获取目录名称 -->
+    <select id="getDirectoryName" resultType="java.lang.String">
+        SELECT name
+        FROM directories
+        WHERE directory_id = #{directoryId}
+    </select>
+
+    <!-- 根据目录名称查询目录 -->
+    <select id="getDirectoryByName" resultType="org.cloud.fs.model.MinioDirectory">
+        SELECT *
+        FROM directories
+        WHERE parent_directory_id = #{parentDirectoryId}
+        AND name = #{name}
+    </select>
+
+    <!-- 查询指定父目录和指定文件夹名称的目录 -->
+    <select id="getDirectoryID" parameterType="map" resultType="java.lang.String">
+        SELECT directory_id
+        FROM directories
+        WHERE parent_directory_id = #{parentDirectoryId}
+        AND name = #{name}
+    </select>
+
+    <!-- 查询指定目录下的所有子目录 -->
+    <select id="getDirectoriesByParentDirectoryId" parameterType="java.util.UUID" resultType="org.cloud.fs.model.MinioDirectory">
+        SELECT *
+        FROM directories
+        WHERE parent_directory_id = #{parentDirectoryId}
+    </select>
+
+    <!-- 查询指定目录下的所有子目录id -->
+    <select id="getDirectoryIdsByParentDirectoryId" parameterType="java.util.UUID" resultType="java.lang.String">
+        SELECT directory_id
+        FROM directories
+        WHERE parent_directory_id = #{parentDirectoryId}
+    </select>
+
+    <select id="getUserIdByDirectoryId" parameterType="java.util.UUID" resultType="java.lang.String">
+        SELECT user_id
+        FROM directories
+        WHERE directory_id = #{directoryId}
+    </select>
+
+</mapper>
