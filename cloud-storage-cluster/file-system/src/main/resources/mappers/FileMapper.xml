@@ -4,29 +4,21 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.cloud.fs.mappers.FileMapper">
 
-    <!-- 插入文件 -->
+    <!-- 添加文件 -->
     <insert id="createFile" parameterType="map">
         INSERT INTO files (file_id, directory_id, user_id, object_name, mime_type, size)
         VALUES (#{fileId}, #{directoryId}, #{userId}, #{objectName}, #{mimeType}, #{size})
     </insert>
 
-    <!-- 更新文件 -->
-    <update id="updateFile" parameterType="map">
-        UPDATE files
-        SET directory_id = #{directoryId},
-            user_id = #{userId},
-            object_name = #{objectName},
-            size = #{size},
-            updated_at = CURRENT_TIMESTAMP
-        WHERE file_id = #{fileId}
-    </update>
-
-    <!-- 更新文件名称 -->
-    <update id="updateFileName" parameterType="map">
-        UPDATE files
-        SET object_name = #{objectName}
-        WHERE file_id = #{fileId}
-    </update>
+    <!-- 检查指定目录下是否存在特定名称的文件 -->
+    <select id="isFileExist" resultType="java.lang.Boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM files
+            WHERE directory_id = #{directoryId}
+            AND object_name = #{objectName}
+        )
+    </select>
 
     <!-- 删除文件 -->
     <delete id="deleteFile" parameterType="java.util.UUID">
@@ -42,20 +34,6 @@
         WHERE file_id = #{fileId}
     </update>
 
-    <!-- 查询文件是否存在 -->
-    <select id="isFileExist" parameterType="java.util.UUID" resultType="java.lang.Boolean">
-        select EXISTS(
-            select 1 from files WHERE file_id = #{fileId}
-        ) AS file_exists;
-    </select>
-
-    <!-- 查询文件所在文目录的ID -->
-    <select id="getDirectoryId" parameterType="java.util.UUID" resultType="java.lang.String">
-        SELECT directory_id
-        FROM files
-        WHERE file_id = #{fileId}
-    </select>
-
     <!-- 根据文件ID查询父目录对象 -->
     <select id="getParentDirectory" parameterType="java.util.UUID" resultType="org.cloud.fs.model.MinioDirectory">
         SELECT *
@@ -67,26 +45,26 @@
         )
     </select>
 
-    <!-- 根据用户ID查询文件 -->
-    <select id="getFileById" parameterType="java.util.UUID" resultType="org.cloud.fs.model.MinioFile">
-        SELECT *
-        FROM files
-        WHERE file_id = #{fileId}
-    </select>
-
-    <!-- 根据父目录和文件名称获取文件对象 -->
-    <select id="getFileByName" parameterType="map" resultType="org.cloud.fs.model.MinioFile">
-        SELECT *
-        FROM files
-        WHERE directory_id = #{directoryId}
-        AND object_name = #{objectName}
-    </select>
-
     <!-- 查询指定目录下的所有文件 -->
     <select id="getFilesByDirectoryId" parameterType="java.util.UUID" resultType="org.cloud.fs.model.MinioFile">
-        select *
+        SELECT *
         FROM files
         WHERE directory_id = #{directoryId}
+    </select>
+
+    <!-- 统计指定目录下的文件数量 -->
+    <select id="countFilesByDirectoryId" parameterType="java.util.UUID" resultType="java.lang.Long">
+        SELECT COUNT(file_id)
+        FROM files
+        WHERE directory_id = #{directoryId}
+    </select>
+
+    <!-- 分页查询指定目录下的文件 -->
+    <select id="getFileByDirectoryIdPaged" parameterType="map" resultType="org.cloud.fs.model.MinioFile">
+        SELECT *
+        FROM files
+        WHERE directory_id = #{directoryId}
+        LIMIT #{offset}, #{limit}
     </select>
 
     <!-- 查询指定目录下的所有文件ID -->
@@ -99,6 +77,13 @@
     <!-- 获取文件的所属用户 id -->
     <select id="getUserIdByFileId" parameterType="java.util.UUID" resultType="java.lang.String">
         SELECT user_id
+        FROM files
+        WHERE file_id = #{fileId}
+    </select>
+
+    <!-- 查询文件所属目录ID -->
+    <select id="getDirectoryIdByFileId" parameterType="java.util.UUID" resultType="java.lang.String">
+        SELECT directory_id
         FROM files
         WHERE file_id = #{fileId}
     </select>
@@ -116,5 +101,4 @@
         FROM files
         WHERE user_id = #{userId}
     </select>
-
 </mapper>

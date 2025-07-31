@@ -16,7 +16,18 @@ public interface DirectoryMapper {
      * @param name 目录名称
      * @return 受影响的行数
      */
-    int createDirectory(@Param("parentDirectoryId") UUID parentDirectoryId, @Param("userId") UUID userId, @Param("name") String name);
+    int createDirectory(@Param("directoryId") UUID directoryId,
+                        @Param("parentDirectoryId") UUID parentDirectoryId,
+                        @Param("userId") UUID userId,
+                        @Param("name") String name);
+
+    /**
+     * 更新目录的名称
+     * @param directoryId 目录ID
+     * @param name 目录的新名称
+     * @return 受影响的行数
+     */
+    int updateDirectoryName(@Param("directoryId") UUID directoryId, @Param("name") String name);
 
     /**
      * 删除目录
@@ -24,17 +35,6 @@ public interface DirectoryMapper {
      * @return 受影响的行数
      */
     int deleteDirectory(@Param("directoryId") UUID directoryId);
-
-    /**
-     * 更新目录的信息，只有可更改的字段会被更新
-     * @param parentDirectoryId 父目录ID
-     * @param userId 用户ID
-     * @param name 目录名称
-     * @return 受影响的行数
-     */
-    int updateDirectory(@Param("parentDirectoryId") UUID parentDirectoryId, @Param("userId") UUID userId, @Param("name") String name);
-
-    int updateDirectoryName(@Param("directoryId") UUID directoryId, @Param("name") String name);
 
     /**
      * 移动目录
@@ -52,6 +52,20 @@ public interface DirectoryMapper {
     Boolean isDirectoryExist(@Param("directoryId") UUID directoryId);
 
     /**
+     * 检查目录是否为空
+     * @param directoryId 目录ID
+     * @return 目录是否为空，true 表示为空，false 表示不为空
+     */
+    Boolean isDirectoryEmpty(@Param("directoryId") UUID directoryId);
+
+    /**
+     * 查询指定用户的根目录ID
+     * @param userId 用户ID
+     * @return 根目录ID
+     */
+    String getRootDirectoryId(@Param("userId") UUID userId);
+
+    /**
      * 根据目录ID查询目录
      * @param directoryId 目录ID
      * @return 目录对象
@@ -65,13 +79,6 @@ public interface DirectoryMapper {
     String getDirectoryName(@Param("directoryId") UUID directoryId);
 
     /**
-     * 查询指定用户的根目录， 根目录的父目录ID为NULL
-     * @param userId  用户ID
-     * @return 根目录对象
-     */
-    MinioDirectory getRootDirectory(@Param("userId") UUID userId);
-
-    /**
      * 查询指定目录的父目录对象，常用于构建目录的绝对路径
      * @param directoryId 文件夹ID
      * @return 父目录对象
@@ -79,20 +86,12 @@ public interface DirectoryMapper {
     MinioDirectory getDirectory(@Param("directoryId") UUID directoryId);
 
     /**
-     * 根据父目录ID和目录名称查询目录
-     * @param parentDirectoryId 父目录ID
-     * @param name 目录名称
-     * @return 目录对象
-     */
-    MinioDirectory getDirectoryByName(@Param("parentDirectoryId") UUID parentDirectoryId, @Param("name") String name);
-
-    /**
      * 根据父目录ID和目录名称查询目录ID
      * @param parentDirectoryId 父目录ID
      * @param name 目录名称
      * @return 目录ID
      */
-    String getDirectoryID(@Param("parentDirectoryId") UUID parentDirectoryId, @Param("name") String name);
+    String getDirectoryId(@Param("parentDirectoryId") UUID parentDirectoryId, @Param("name") String name);
 
     /**
      * 查询指定目录的所有子目录
@@ -100,18 +99,4 @@ public interface DirectoryMapper {
      * @return 子目录列表
      */
     List<MinioDirectory> getDirectoriesByParentDirectoryId(@Param("parentDirectoryId") UUID parentDirectoryId);
-
-    /**
-     * 查询指定目录的所有子目录ID
-     * @param parentDirectoryId 父目录ID
-     * @return 子目录ID列表
-     */
-    List<String> getDirectoryIdsByParentDirectoryId(@Param("parentDirectoryId") UUID parentDirectoryId);
-
-    /**
-     * 根据目录ID查询用户ID
-     * @param directoryId 目录ID
-     * @return 用户ID
-     */
-    String getUserIdByDirectoryId(@Param("directoryId") UUID directoryId);
 }

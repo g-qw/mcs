@@ -1,0 +1,48 @@
+### 创建根目录
+POST http://{{fs.base_url}}/root_dir?userId={{user_meta.userId}}
+
+### 获取根目录数据
+GET http://{{fs.base_url}}/get_root_dir?userId={{user_meta.userId}}
+
+### 创建目录
+POST http://{{fs.base_url}}/create_dir?userId={{user_meta.userId}}
+Content-Type: application/json
+
+{
+  "parentDirectoryId": "{{user_meta.root_dir}}",
+  "userId": "{{user_meta.userId}}",
+  "name": "dir_4"
+}
+
+### 获取目录名称
+GET http://{{fs.base_url}}/get_dir_name?directoryId={{user_meta.root_dir}}
+
+### 更新目录名称
+POST http://{{fs.base_url}}/update_dir_name?directoryId=e205b2c0-915e-46f8-a4a8-e95e55de5d9e&name=dir_1
+
+### 删除目录
+POST http://{{fs.base_url}}/delete_dir?directoryId=6a3e7248-b6b7-4633-9d4e-fe3ecb9f4217
+
+### 加载目录
+POST http://{{fs.base_url}}/load_dir?directoryId=adaf6cfc-bbb4-4f51-b51f-9f26ea07c5ce
+
+### 移动目录
+POST http://{{fs.base_url}}/move_dir?directoryId=adaf6cfc-bbb4-4f51-b51f-9f26ea07c5ce&parentDirectoryId=42b6b7b4-9b13-4b62-8427-850a94d84789
+
+### 创建文件
+POST http://{{fs.base_url}}/add_file
+Content-Type: application/json
+
+{
+  "directoryId": "{{user_meta.root_dir}}",
+  "userId": "{{user_meta.userId}}",
+  "objectName": "/1024.dat",
+  "mimeType": "application/octet-stream",
+  "size": 1024
+}
+
+### 删除文件
+POST http://{{fs.base_url}}/delete_file?fileId=665b4ad9-846d-4c59-8d75-66c9fbb3fe34
+
+### 移动文件
+POST http://{{fs.base_url}}/move_file?fileId=665b4ad9-846d-4c59-8d75-66c9fbb3fe34&directoryId={{user_meta.root_dir}}

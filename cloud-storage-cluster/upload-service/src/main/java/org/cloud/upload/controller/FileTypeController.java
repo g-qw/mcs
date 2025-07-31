@@ -31,6 +31,12 @@ public class FileTypeController {
     private final Map<String, List<String>> mediaTypeExtensionsCache = new ConcurrentHashMap<>();
     private static final MimeTypes mimeTypes = MimeTypes.getDefaultMimeTypes();  // 获取默认的 MimeTypes 对象
 
+    /**
+     * 识别文件类型
+     * @apiNote 根据发送到接口的文件头部片段，利用tika库识别文件类型
+     * @param filePartMono 文件头部片段
+     * @return 文件的MIME类型
+     */
     @PostMapping("/fileType")
     Mono<FileTypeResponse> parseFileType(@RequestPart("file") Mono<FilePart> filePartMono) {
         return filePartMono.flatMap(filePart -> {// 对文件部分进行处理

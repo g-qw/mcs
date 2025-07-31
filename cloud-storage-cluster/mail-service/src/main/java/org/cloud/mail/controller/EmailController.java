@@ -49,6 +49,12 @@ public class EmailController {
         this.redisTemplate = redisTemplate;
     }
 
+    /**
+     * 检查邮箱是否可用
+     * @param emailRequest 邮箱请求对象，包含 email 参数
+     * @return 验证结果，valid 表示邮箱可用，invalid 表示邮箱不可用
+     */
+
     @PostMapping("/check_email")
     public Mono<String> checkEmail(@Validated @RequestBody EmailRequest emailRequest) {
         return Mono.fromFuture(
@@ -75,8 +81,8 @@ public class EmailController {
 
     /**
      * 发送验证码
-     * 验证码以 verification:email 为键存入 redis，有效期为 1 分钟
-     * @param emailRequest 请求参数, 包含邮箱
+     * @param emailRequest 邮箱请求对象，包含 email 参数
+     * @return 操作响应，包含消息提示
      */
     @PostMapping("/verify")
     public Mono<ApiResponse<?>> sendVerifyEmail(@Validated @RequestBody EmailRequest emailRequest) {

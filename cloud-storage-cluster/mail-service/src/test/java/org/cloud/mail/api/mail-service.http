@@ -1,0 +1,15 @@
+### 检查邮箱是否可用
+POST http://{{mail.base_url}}/check_email
+Content-Type: application/json
+
+{
+  "email": "3263256537@qq.com"
+}
+
+### 邮箱验证
+POST http://{{mail.base_url}}/verify
+Content-Type: application/json
+
+{
+  "email": "3263256537@qq.com"
+}

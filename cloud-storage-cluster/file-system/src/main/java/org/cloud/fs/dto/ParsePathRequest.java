@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class ParsePathRequest {
+
     private String path;
     private String userId;
 }

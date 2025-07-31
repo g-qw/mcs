@@ -1,0 +1,19 @@
+{
+  "serverUrl": "http://localhost:8104",
+  "pathPrefix": "",
+  "allInOne": true,
+  "allInOneDocFileName": "file-system-doc.html",
+  "outPath": "target/smart-doc",
+  "style": "xt256",
+  "createDebugPage": false,
+  "packageFilters": "org.cloud.fs.controller.*",
+  "revisionLogs": [
+    {
+      "version": "1.0",
+      "revisionTime": "2025-07-31 13:52",
+      "status": "创建",
+      "author": "lqw",
+      "remarks": "文件系统服务，提供对文件夹、文件的元数据和结构管理等等功能"
+    }
+  ]
+}

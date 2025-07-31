@@ -18,6 +18,12 @@ public class HomeController {
         this.routeDefinitionLocator = routeDefinitionLocator;
     }
 
+    /**
+     * 网关的首页
+     * @apiNote 显示网关的一些路由信息
+     * @param model 包含一些路由属性的模型
+     * @return 首页文件
+     */
     @GetMapping("/")
     public String home(Model model) {
         Flux<RouteDefinition> routes = routeDefinitionLocator.getRouteDefinitions();

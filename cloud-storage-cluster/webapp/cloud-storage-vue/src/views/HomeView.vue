@@ -2,7 +2,7 @@
     <main class="home">
         <div class="parallax start" ref="parallaxStart">
             <video autoplay muted loop class="background-video">
-                <source src="@/assets/start.mp4" type="video/mp4">
+                <source src="/src/assets/main/start.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
 

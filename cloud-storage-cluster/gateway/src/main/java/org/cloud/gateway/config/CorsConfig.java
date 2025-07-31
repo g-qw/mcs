@@ -15,22 +15,10 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));  // 允许所有域名跨域
-        corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));  // 允许所有请求方法
-        corsConfiguration.setAllowedHeaders(Arrays.asList(
-                "Content-Type",
-                "Authorization",
-                "Accept",
-                "Origin",
-                "X-Requested-With",
-                "X-Custom-Header",
-                "Referer",
-                "User-Agent",
-                "Accept-Language",
-                "Accept-Encoding",
-                "Content-Range"
-        ));
+        corsConfiguration.addAllowedMethod("*");  // 允许所有请求方法
+        corsConfiguration.addAllowedHeader("*"); // 允许所有请求头
         corsConfiguration.setAllowCredentials(true);  // 允许携带 cookie 的请求
-        corsConfiguration.setMaxAge(3600L);  // 预检请求的有效期，单位：秒
+        corsConfiguration.setMaxAge(3600L);  // 预检请求的有效期为 60 分钟，单位：秒
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);

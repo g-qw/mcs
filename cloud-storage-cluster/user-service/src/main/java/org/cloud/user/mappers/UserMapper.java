@@ -2,6 +2,7 @@ package org.cloud.user.mappers;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.cloud.user.dto.UpdateUserInfoRequest;
 import org.cloud.user.dto.UserInfo;
 import org.cloud.user.model.User;
 
@@ -25,6 +26,9 @@ public interface UserMapper{
     // 查询用户状态
     String selectUserStatus(@Param("userId") UUID userId);
 
+    // 根据邮箱查询用户是否存在
+    Boolean isUserExist(@Param("email") String email);
+
     // 插入新用户
     int insertUser(User user);
 
@@ -32,7 +36,7 @@ public interface UserMapper{
     int updateLastLoginAt(@Param("email") String email);
 
     // 更新用户信息
-    int updateUser(UserInfo userInfo);
+    int updateUserInfo(UUID userId, String username, String bio, String avatar);
 
     // 更新密码
     int updatePassword(@Param("email") String email,
@@ -45,6 +49,8 @@ public interface UserMapper{
     // 更新用户状态
     int updateUserStatus(@Param("userId") UUID userId,
                          @Param("userStatus") String userStatus);
+
+    int updateAvatar(@Param("userId") UUID userId, @Param("avatar") String avatar);
 
     // 删除用户
     int deleteUser(@Param("userId") UUID userId);

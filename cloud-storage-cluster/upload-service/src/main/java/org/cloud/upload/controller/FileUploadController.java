@@ -6,8 +6,9 @@ import io.minio.*;
 //import io.minio.messages.Part;
 import jakarta.validation.Valid;
 import org.cloud.upload.dto.ApiResponse;
-import org.cloud.upload.dto.FilesUploadResult;
+import org.cloud.upload.dto.CompleteMultipartUploadRequest;
 import org.cloud.upload.dto.InitMultipartUploadRequest;
+import org.cloud.upload.dto.UploadResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,12 +18,14 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
@@ -36,31 +39,25 @@ public class FileUploadController {
     private final MinioClient minioClient;
     private final MinioAsyncClient minioAsyncClient;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
-
-    // 创建一个固定大小的线程池，数量为可用处理器数量的 4 倍， 适用于 I/O 密集型任务
-    private final ExecutorService executorService = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors() * 2, // 核心线程数
-            Runtime.getRuntime().availableProcessors() * 4, // 最大线程数
-            60L,  // 线程空闲时间
-            TimeUnit.SECONDS, // 空闲时间单位
-            new LinkedBlockingQueue<>(256), // 阻塞队列(可以指定队列大小，避免内存溢出)
-            new ThreadPoolExecutor.CallerRunsPolicy() // 拒绝策略(当队列满了，新任务会在调用线程中执行)
-    );
+    private final ExecutorService executorService;
 
     @Autowired
-    public FileUploadController(MinioClient minioClient, MinioAsyncClient minioAsyncClient, ReactiveRedisTemplate<String, String> redisTemplate) {
+    public FileUploadController(MinioClient minioClient,
+                                MinioAsyncClient minioAsyncClient,
+                                ReactiveRedisTemplate<String, String> redisTemplate,
+                                ExecutorService executorService) {
         this.minioClient = minioClient;
         this.minioAsyncClient = minioAsyncClient;
         this.redisTemplate = redisTemplate;
+        this.executorService = executorService;
     }
 
     /**
-     * 上传单个中型文件
-     * 微小文件：0.2 s
-     * 中型文件(几百MB)：1min ~ 2min 左右， 7.5 MB/s
-     * @param bucketName 存储桶名称，必须是已存在的存储桶
-     * @param objectName 对象名称(需要包括文件后缀，否则下载时无法识别类型), 方法内不检查此参数，但是必须在发起请求时指定此参数
-     * @param filePartMono 文件部分的 Mono
+     * 上传单个文件
+     * @apiNote 适合中型文件上传的场景，建议大小在 5 MB ~ 50 MB 的文件使用此方式、
+     * @param bucketName Minio 存储桶名称，必须是已存在的存储桶
+     * @param objectName 上传的文件在 Minio 的绝对路径，包括文件名和文件后缀，如果不包含后缀，则下载时无法识别文件类型
+     * @param filePartMono body 的文件对象数据
      */
     @PostMapping("/file")
     public Mono<ApiResponse<?>> uploadFile(@RequestParam("bucketName") String bucketName,
@@ -90,42 +87,49 @@ public class FileUploadController {
                 }
 
                 // 上传文件，并返回响应
-                return filePartMono.flatMap(filePart -> {// 对文件部分进行处理
-                    return DataBufferUtils.join(filePart.content()) // 将多个 DataBuffer 合并为一个
-                        .flatMap( // flatMap 将一个数据流中的每个元素映射成一个新的数据流
+                return filePartMono.flatMap(filePart -> // 对文件部分进行处理
+                    DataBufferUtils.join(filePart.content()) // 将多个 Flux<DataBuffer> 合并为一个
+                        .flatMap( // 将响应流 Mono 展平
                             buffer -> { // 对合并后的 DataBuffer 进行处理
-                                try{
-                                    // 使用 MinioClient 客户端上传文件
-                                    minioClient.putObject(
-                                        PutObjectArgs.builder() // 构建上传参数
-                                        .bucket(bucketName)  // 设置存储桶名称
-                                        .object(objectName)  // 设置对象名称
-                                        .stream(buffer.asInputStream(), buffer.readableByteCount(), -1) // 设置输入流, 文件大小和偏移量(-1表示从文件开头开始)
-                                        .contentType(Objects.requireNonNull(filePart.headers().getContentType()).toString()) // 设置内容类型
-                                        .build()
-                                    );
 
-                                    logger.info("上传文件：{}{}", bucketName, objectName);
+                                // 将阻塞的上传任务提交到线程池中执行
+                                return Mono.fromCallable(
+                                        () -> {
+                                            try{
+                                                // 使用 MinioClient 客户端上传文件
+                                                minioClient.putObject(
+                                                        PutObjectArgs.builder() // 构建上传参数
+                                                                .bucket(bucketName)  // 设置存储桶名称
+                                                                .object(objectName)  // 设置对象名称
+                                                                .stream(buffer.asInputStream(), buffer.readableByteCount(), -1) // 设置输入流, 文件大小和偏移量(-1表示从文件开头开始)
+                                                                .contentType(Objects.requireNonNull(filePart.headers().getContentType()).toString()) // 设置内容类型
+                                                                .build()
+                                                );
 
-                                    return Mono.just(ApiResponse.success("文件上传成功！"));
-                                } catch (Exception e) {
-                                    logger.error("文件上传失败：{}{}", bucketName, objectName, e);
-                                    return Mono.just(ApiResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR.value(), "文件上传失败！"));
-                                } finally {
-                                    DataBufferUtils.release(buffer);  // 释放 DataBuffer
-                                }
+                                                logger.info("上传文件：{}{}", bucketName, objectName);
+
+                                                return ApiResponse.success("文件上传成功！");
+                                            } catch(Exception e) {
+                                                logger.error("文件上传失败：{}{}", bucketName, objectName, e);
+                                                return ApiResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR.value(), "文件上传失败！");
+                                            } finally {
+                                                DataBufferUtils.release(buffer);  // 释放 DataBuffer
+                                            }
+                                        }
+                                );
                             }
-                        );
-                    }
-                ).defaultIfEmpty(ApiResponse.failure(HttpStatus.NOT_FOUND.value(), "未上传文件，请选择要上传的文件。"));  // 如果没有在请求中找到文件，返回错误响应
-
-            }).subscribeOn(Schedulers.fromExecutor(executorService));  // 指定线程池
+                        ).subscribeOn(Schedulers.fromExecutorService(executorService)) // 订阅任务，将上传任务提交到线程池执行
+                // 如果没有上传文件，返回错误响应
+                ).defaultIfEmpty(ApiResponse.failure(HttpStatus.NOT_FOUND.value(), "未上传文件，请选择要上传的文件。"));
+            });
     }
 
     /**
-     * 上传多个小型文件，使用文件的文件名作为绝对路径，但是在存储时解析它的文件名存储到数据库
-     * @param bucketName 存储桶名称，必须是已存在的存储桶
-     * @param files 文件部分的异步序列
+     * 上传多个文件
+     * @apiNote 适用场景为将小文件使用一次 HTTP 请求上传到 Minio，减少 HTTP 请求次数
+     * @param bucketName Minio 存储桶名称，必须是已存在的存储桶
+     * @param files body 的文件对象数据，文件对象需要从用户选择的文件重新构造文件对象，构造的文件对象的文件名设置为 Minio 中该文件的绝对路径
+     * @return 如果所有文件上传成功，返回成功响应，否则返回包含失败文件列表的失败响应
      */
     @PostMapping("/files")
     public Mono<ApiResponse<?>> uploadFiles(@RequestParam ("bucketName") String bucketName,
@@ -146,56 +150,78 @@ public class FileUploadController {
                     return Mono.just(ApiResponse.failure(HttpStatus.NOT_FOUND.value(), "存储桶不存在，请检查存储桶名称是否正确。"));
                 }
 
-                // 上传文件
+                // 处理文件数据
                 return files.flatMap( filePart -> { // 将 Flux 转换为 Mono
                         String objectName = filePart.headers().getContentDisposition().getFilename();  // 获取文件名称
+
+                        if (objectName == null || objectName.isEmpty()) {
+                            logger.error("多文件上传中出现空文件名，无法处理");
+                            return Mono.just(new UploadResult("未知文件-" + System.currentTimeMillis(), false));
+                        }
+
                         return DataBufferUtils.join(filePart.content())
-                            .map( buffer -> { // 将流中的元素转换为 InputStream, map 将一个数据流中的每个元素映射成另一个元素
-                                try{
-                                    // 使用 MinioClient 客户端上传文件
-                                    minioClient.putObject(
-                                        PutObjectArgs.builder() // 构建上传参数
-                                        .bucket(bucketName)  // 设置存储桶名称
-                                        .object(objectName)  // 设置对象名称
-                                        .stream(buffer.asInputStream(), buffer.readableByteCount(), -1) // 设置输入流, 文件大小和偏移量(-1表示从文件开头开始)
-                                        .contentType(Objects.requireNonNull(filePart.headers().getContentType()).toString()) // 设置内容类型
-                                        .build()
-                                    );
+                            .flatMap( buffer -> { // 将 Mono<DataBuffer> 展平为 DataBuffer
+                                return Mono.fromCallable(
+                                        () -> {
+                                            try{
+                                                // 使用 MinioClient 客户端上传文件
+                                                minioClient.putObject(
+                                                        PutObjectArgs.builder() // 构建上传参数
+                                                                .bucket(bucketName)  // 设置存储桶名称
+                                                                .object(objectName)  // 设置对象名称
+                                                                .stream(buffer.asInputStream(), buffer.readableByteCount(), -1) // 设置输入流, 文件大小和偏移量(-1表示从文件开头开始)
+                                                                .contentType(Objects.requireNonNull(filePart.headers().getContentType()).toString()) // 设置内容类型
+                                                                .build()
+                                                );
 
-                                    logger.info("多文件上传：{}{}", bucketName, objectName);
-                                    return true;
-                                } catch(Exception e) {
-                                    return false;
-                                } finally {
-                                    DataBufferUtils.release(buffer);
-                                }
-                            });
+                                                logger.info("多文件上传：{}{}", bucketName, objectName);
+                                                return new UploadResult(objectName, true);
+                                            } catch(Exception e) {
+                                                return new UploadResult(objectName, false);
+                                            } finally {
+                                                DataBufferUtils.release(buffer);
+                                            }
+                                        }
+                                ).onErrorResume(
+                                    e -> {
+                                        logger.error("文件上传异常：{}", objectName, e);
+                                        return Mono.just(new UploadResult(objectName, false));
+                                    }
+                                ); // 捕获每个文件上传过程中发生的异常，并返回一个默认值或替代操作，从而避免因单个文件上传失败而导致整个流程中断
+                            }).subscribeOn(Schedulers.fromExecutorService(executorService)); // 订阅任务，将上传文件的任务提交到线程池执行
                     }
-                ).collectList().map(uploadResults -> { // 将上传结果收集到一个列表中
-                    if(uploadResults.stream().allMatch(Boolean::booleanValue)) {
-                        return ApiResponse.success("文件上传成功！");
-                    } else {  // 如果有文件上传失败，统计上传成功和错误的文件数量
-                        int successCount = (int) uploadResults.stream().filter(Boolean::booleanValue).count();
-                        int failureCount = (int) uploadResults.stream().filter(result -> !result).count();
+                ).collectList()
+                .map(uploadResults -> { // 将上传结果收集到一个列表中
+                    List<String> failedFiles = uploadResults.stream()
+                            .filter(r -> !r.isSuccess())
+                            .map(UploadResult::getFileName)
+                            .toList();
 
-                        FilesUploadResult filesUploadResult =  new FilesUploadResult(successCount, failureCount);
-                        logger.error("{} 存在 {} 个文件上传失败！", bucketName, failureCount);
-
-                        return ApiResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR.value(), "存在" + failureCount + "个文件上传失败！", filesUploadResult);  // 返回上传失败的名称列表
+                    if(failedFiles.isEmpty()) {
+                        return ApiResponse.success("所有文件上传成功！");
+                    } else {
+                        logger.error("多文件上传出现失败，失败列表：\n{}", failedFiles);
+                        return ApiResponse.failure(
+                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                "存在" + failedFiles.size() + " 个文件上传失败，请尝试重新上传未上传成功的文件！",
+                                failedFiles
+                        );
                     }
                 });
-        }).subscribeOn(Schedulers.fromExecutor(executorService));  // 指定线程池
+        });
     }
 
     /**
-     * 初始化分片上传, 每次初始化成功会在redis创建一个List，用于存储分片的唯一标识ETag
-     * List的键形式为 uploadId:{uploadId}
-     * 每一个分块任务如果在 24 小时内没有完成分片合并，则该任务会被 Minio 自动取消，并删除这个任务的分片
+     * 初始化分片上传
+     * @apiNote 每次初始化成功会在redis创建一个List，用于存储分片的唯一标识ETag
+     * @apiNote List的键形式为 uploadId:{uploadId}
+     * @apiNote 每一个分块任务如果在 24 小时内没有完成分片合并，则该任务会被 Minio 自动取消，并删除这个任务的分片
+     * @param request 请求体，包含初始分片上传的信息：
      * bucketName 存储桶名称
      * region 区域名称(可选), 在分布式存储时，可以指定对象的区域
-     * objectName 对象名称(需要包括文件后缀，否则下载时无法识别类型)
-     * contentType 文件类型
-     * return 如果初始化成功，返回上传任务ID
+     * objectName 上传的文件在 Minio 的绝对路径
+     * contentType 文件的MIME类型
+     * @return 如果初始化成功，返回上传任务ID
      */
     @PostMapping("/multipart/init")
     public Mono<ApiResponse<?>> initMultipartUpload(@Valid @RequestBody InitMultipartUploadRequest request) {
@@ -212,6 +238,7 @@ public class FileUploadController {
             }
         }, executorService);
 
+        // 初始化分片上传请求
         return Mono.fromFuture(bucketExistsFuture)
                 .flatMap(isBucketExists -> {
                     // 检查存储桶是否存在
@@ -224,33 +251,37 @@ public class FileUploadController {
                         return Mono.just(ApiResponse.failure(HttpStatus.BAD_REQUEST.value(), "请指定文件后缀，否则下载时无法识别文件类型。"))   ;
                     }
 
-                    // 创建一个Multimap来存储请求头信息
+                    // 构造请求头
                     Multimap<String, String> headers = HashMultimap.create();
-                    headers.put("Content-Type", contentType);  // 设置文件类型
+                    headers.put("Content-Type", contentType);
 
-                        try {
-                            return Mono.fromFuture(minioAsyncClient.createMultipartUploadAsync(bucketName, null, objectName, headers, null))
-                                .flatMap(response -> {
-                                        logger.info("初始化分片上传任务：{}", response.result().uploadId());
-                                        String uploadId = response.result().uploadId();
-                                        return Mono.just(ApiResponse.success(uploadId)); // 返回上传任务ID
-                                    }
-                                )
-                                .onErrorResume(e -> Mono.just(ApiResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR.value(), "初始化分片上传失败！")));
-                        } catch (Exception e) {
-                            logger.error("初始化分片上传任务：{} 失败", objectName);
-                            return Mono.error(new RuntimeException(e));
-                        }
+                    // 初始化分片上传请求
+                    try {
+                        return Mono.fromFuture(minioAsyncClient.createMultipartUploadAsync(bucketName, null, objectName, headers, null))
+                                .map(response -> {
+                                    String uploadId = response.result().uploadId();   // 获取初始化好的分块上传任务 ID
+                                    logger.info("初始化分片上传任务：{}", uploadId);
+                                    return ApiResponse.success(uploadId);
+                                })
+                                .onErrorResume(e -> {
+                                    logger.error("初始化分片上传任务：{} 失败", objectName, e);
+                                    return Mono.just(ApiResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR.value(), "初始化分片上传失败！"));
+                                }).subscribeOn(Schedulers.fromExecutorService(executorService));
+                    } catch (Exception e) {
+                        logger.error("初始化分片上传任务：{} 失败", objectName);
+                        return Mono.error(new RuntimeException(e));
                     }
-                ).subscribeOn(Schedulers.fromExecutorService(executorService));  // 指定线程池
+                });
     }
 
     /**
-     * 分片上传， 每次上传成功会将分片的ETag存储到Redis的List中，键为uploadId:{uploadId}
-     *
+     * 分片上传
+     * @apiNote 每次上传成功会将分片的ETag存储到Redis的List中，键名为uploadId:{uploadId}
      * @param bucketName   存储桶名称, 推荐指定和初始化上传时相同的存储桶
-     * @param uploadId     上传任务ID
-     * @param partNumber   分片编号
+     * @param region       区域名称(可选), 在分布式存储时，可以指定对象的区域
+     * @param objectName   上传的文件在 Minio 的绝对路径
+     * @param partNumber   分片编号，编号从1开始
+     * @param uploadId     上传任务ID，由初始化分片上传请求返回
      * @param filePartFlux 待上传的文件分片的异步序列流
      * @return 如果分片上传成功，返回分片的ETag
      */
@@ -298,23 +329,21 @@ public class FileUploadController {
                         logger.error("分片上传任务：{}{}, 分块 {} 上传失败", uploadId, objectName, partNumber);
                         return Mono.just(ApiResponse.failure(HttpStatus.INTERNAL_SERVER_ERROR.value(), "分片上传失败！"));
                     }
-                })
-                .subscribeOn(Schedulers.fromExecutorService(executorService)); // 指定线程池
+                });
     }
 
     /**
      * 合并分片，完成分块上传
-     * @param bucketName 存储桶名称
-     * @param region 区域名称(可选), 在分布式存储时，可以指定对象的区域
-     * @param objectName 对象名称(需要包括文件后缀，否则下载时无法识别类型)
-     * @param uploadId 上传任务ID
+     * @param request 完成分块上传请求对象
      */
     @PostMapping("/multipart/complete")
-    public Mono<ApiResponse<?>> completeMultipartUpload(@RequestPart("bucketName") String bucketName,
-                                                        @RequestPart(value="region", required = false) String region,
-                                                        @RequestPart("objectName") String objectName,
-                                                        @RequestPart("uploadId") String uploadId,
-                                                        @RequestPart("contentType") String contentType) {
+    public Mono<ApiResponse<?>> completeMultipartUpload(@Validated @RequestBody CompleteMultipartUploadRequest request) {
+        String bucketName = request.getBucketName();
+        String region = request.getRegion();
+        String objectName = request.getObjectName();
+        String uploadId = request.getUploadId();
+        String contentType = request.getContentType();
+
         return redisTemplate.opsForList().range(UPLOAD_ID_PREFIX +  uploadId, 0, -1)  // 获取Redis中List的Flux异步序列
             .collectList() //将 Flux 转换为 List
             .flatMap(  // 将 List 转换为 Mono
@@ -350,13 +379,13 @@ public class FileUploadController {
                                 null
                         )).flatMap(response ->
                                 redisTemplate.delete("uploadId:" + uploadId)
-                                        .doOnNext(result -> logger.info("完成分块上传任务：{}, 分块合并成功：{}{}", uploadId, bucketName, objectName)) // 确保执行完成 Redis 删除再返回
+                                        .doOnNext(result -> logger.info("完成分块上传任务：{},\n 分块合并成功：{}{}", uploadId, bucketName, objectName)) // 确保执行完成 Redis 删除再返回
                                         .thenReturn(ApiResponse.success(objectName + " 分块上传成功！"))
                         );
                     } catch (Exception e) {
                         return Mono.error(new RuntimeException(e));
                     }
                 }
-            ).subscribeOn(Schedulers.fromExecutorService(executorService));  // 指定线程池
+            );  // 指定线程池
     }
 }

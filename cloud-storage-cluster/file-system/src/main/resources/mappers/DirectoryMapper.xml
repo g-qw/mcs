@@ -6,8 +6,8 @@
 
     <!-- 创建目录 -->
     <insert id="createDirectory" parameterType="map">
-        INSERT INTO directories (parent_directory_id, user_id, name)
-        VALUES ( #{parentDirectoryId}, #{userId}, #{name})
+        INSERT INTO directories (directory_id, parent_directory_id, user_id, name)
+        VALUES ( #{directoryId}, #{parentDirectoryId}, #{userId}, #{name})
     </insert>
 
     <!-- 删除目录 -->
@@ -15,16 +15,7 @@
         DELETE FROM directories WHERE directory_id = #{directoryId}
     </delete>
 
-    <!-- 更新目录信息, 只更新会变化的字段 -->
-    <update id="updateDirectory" parameterType="map">
-        UPDATE directories
-        SET parent_directory_id = #{parentDirectoryId},
-            user_id = #{userId},
-            name = #{name},
-            updated_at = CURRENT_TIMESTAMP
-        WHERE directory_id = #{directoryId}
-    </update>
-
+    <!-- 更新目录的名称 -->
     <update id="updateDirectoryName" parameterType="map">
         UPDATE directories
         SET name = #{name},
@@ -39,12 +30,12 @@
         WHERE directory_id = #{directoryId}
     </update>
 
-    <!-- 查询目录是否存在 -->
-    <select id="isDirectoryExist" resultType="java.lang.Boolean">
-        SELECT EXISTS (
-            SELECT 1 FROM directories
-            WHERE directory_id = #{directoryId}
-        ) AS directory_exists;
+    <!-- 查询用户的根目录ID -->
+    <select id="getRootDirectoryId" parameterType="java.util.UUID" resultType="java.lang.String">
+        SELECT directory_id
+        FROM directories
+        WHERE user_id = #{userId}
+        AND parent_directory_id is NULL
     </select>
 
     <!-- 根据目录ID查询目录 -->
@@ -54,12 +45,21 @@
         WHERE directory_id = #{directoryId}
     </select>
 
-    <!-- 查询指定用户的根目录 -->
-    <select id="getRootDirectory" parameterType="java.util.UUID" resultType="org.cloud.fs.model.MinioDirectory">
-        SELECT *
-        FROM directories
-        WHERE user_id = #{userId}
-        AND parent_directory_id IS NULL AND name = '/'
+    <!-- 查询目录是否存在 -->
+    <select id="isDirectoryExist" parameterType="java.util.UUID" resultType="java.lang.Boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM directories
+            WHERE directory_id = #{directoryId}
+        ) AS directory_exists;
+    </select>
+
+    <!-- 查询目录是否为空 -->
+    <select id="isDirectoryEmpty" parameterType="java.util.UUID" resultType="java.lang.Boolean">
+        SELECT NOT EXISTS(
+            SELECT 1 FROM directories WHERE parent_directory_id = #{directoryId}
+            UNION ALL
+            SELECT 1 FROM files WHERE directory_id = #{directoryId}
+        )
     </select>
 
     <!-- 查询指定目录ID的目录 -->
@@ -76,16 +76,8 @@
         WHERE directory_id = #{directoryId}
     </select>
 
-    <!-- 根据目录名称查询目录 -->
-    <select id="getDirectoryByName" resultType="org.cloud.fs.model.MinioDirectory">
-        SELECT *
-        FROM directories
-        WHERE parent_directory_id = #{parentDirectoryId}
-        AND name = #{name}
-    </select>
-
     <!-- 查询指定父目录和指定文件夹名称的目录 -->
-    <select id="getDirectoryID" parameterType="map" resultType="java.lang.String">
+    <select id="getDirectoryId" parameterType="map" resultType="java.lang.String">
         SELECT directory_id
         FROM directories
         WHERE parent_directory_id = #{parentDirectoryId}
@@ -97,19 +89,6 @@
         SELECT *
         FROM directories
         WHERE parent_directory_id = #{parentDirectoryId}
-    </select>
-
-    <!-- 查询指定目录下的所有子目录id -->
-    <select id="getDirectoryIdsByParentDirectoryId" parameterType="java.util.UUID" resultType="java.lang.String">
-        SELECT directory_id
-        FROM directories
-        WHERE parent_directory_id = #{parentDirectoryId}
-    </select>
-
-    <select id="getUserIdByDirectoryId" parameterType="java.util.UUID" resultType="java.lang.String">
-        SELECT user_id
-        FROM directories
-        WHERE directory_id = #{directoryId}
     </select>
 
 </mapper>

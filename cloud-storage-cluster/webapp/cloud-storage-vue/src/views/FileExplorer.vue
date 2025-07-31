@@ -370,14 +370,15 @@ export default {
         /* 重置上传 */
         resetUpload() {
             this.fileList = [];
+            this.ignoreFiles = [];
             this.isShowFileList = false;
             this.uploadStatus = "uploading";
             this.isDisabled = false;
         },
 
         async upload() {
-            const SMALL_FILE_SIZE = 10 * 1024 * 1024; // 50 MB 以下为小型文件
-            const MEDIUM_FILE_SIZE = 100 * 1024 * 1024; // 50MB - 100MB 为中型文件
+            const SMALL_FILE_SIZE = 5 * 1024 * 1024; // 5 MB 以下为小型文件
+            const MEDIUM_FILE_SIZE = 50 * 1024 * 1024; // 5MB - 50MB 为中型文件
 
             // 初始化分类数组，存储它们在 files 文件对象数组的索引
             let smallFiles = [];
@@ -722,22 +723,6 @@ export default {
             }
         },
 
-        /* 获取文件名称 */
-        async getFileName(fileId) {
-            try {
-                const response = await axios(apiEndpoints.fsGetFileName(fileId))
-
-                if (response.data.code === 200) {
-                    return response.data.data;
-                } else {
-                    return Date.now();
-                }
-            } catch (error) {
-                console.log('文件名称为空，请求文件名称失败：', error);
-                return Date.now();
-            }
-        },
-
         /* 获取当前的日期时间字符串  */
         getCurrentDateTime() {
             const now = new Date();
@@ -771,7 +756,9 @@ export default {
             axios(apiEndpoints.fsUpdateDirName(directoryId, name))
             .then(
                 response => {
-                    if (response.data.code !== 200) {
+                    if (response.data.code === 200) {
+                        console.log(`修改文件夹名称： ${originName} -> ${name}`);
+                    } else {
                         this.createPopup('warning', response.data.msg || `修改文件夹名称为 ${name} 失败`);
                         folder.name = originName;
                     }
@@ -785,43 +772,6 @@ export default {
             )
 
             folder.updatedAt = this.getCurrentDateTime();
-        },
-
-        /* 更新文件名称 */
-        updateFileName(file) {
-            const fileId = file.fileId;
-            const objectName = file.objectName;
-            const originName = this.getFileName(file.fileId);
-
-            if (objectName.trim() === '') {
-                this.popup("warning", "文件名称不能为空");
-                file.objectName = originName;
-                return;
-            }
-
-            const illegalCharRegex = /[/\\:*?"<>|]/;
-            if (illegalCharRegex.test(name)) {
-                this.createPopup("warning", "文件名称包含非法路径字符");
-                file.objectName = originName;
-                return;
-            }
-
-            axios(apiEndpoints.fsUpdateFileName(fileId, objectName))
-            .then(
-                response => {
-                    if (response.data.code === 200) {
-                        console.log(`更新文件名称：${objectName}`);
-                    } else {
-                        this.createPopup('error', `更新文件名称 ${objectName} 失败`);
-                        file.objectName = originName;
-                    }
-                }
-            ).catch(
-                error => {
-                    console.log(`更新文件名称 ${objectName} 发生错误`, error);
-                    this.createPopup('error', `更新文件名称 ${objectName} 发生错误`);
-                }
-            )
         },
 
         /* 删除文件 */
@@ -849,6 +799,7 @@ export default {
                 }
             )
         },
+
         /** 
             下载文件，根据文件大小进行自动选择下载方式 
             size <= 10 MB: 单文件下载
@@ -872,39 +823,13 @@ export default {
             this.downloadTasks.push(task); // 将任务插入到任务数组开头
 
             // 获取文件路径
-            const filePath = await this.getFilePath(file.fileId);
-            if (filePath === '') { // 获取失败
-                return;
-            }
+            const filePath = this.path + file.objectName; // 文件在minio的绝对路径
 
             // 根据文件大小选择不同的下载方式
             if (file.size <= SMALL_FILE_SIZE) {
                 this.downloadSmallFile(filePath, file, task);
             } else {
                 this.multipartDownload(filePath, file, task);
-            }
-        },
-
-        /**
-         * 获取文件在minio的绝对路径
-         * @param fileId 文件ID
-         * @param fileName 文件名称
-         */
-         async getFilePath(fileId, fileName) {
-            try {
-                const response = await axios(apiEndpoints.fsGetFilePath(fileId));
-                if (response.data.code === 200) {
-                    let filePath = response.data.data;
-                    console.log(`初始化文件 ${fileId} 的下载：${filePath}`);
-                    return filePath;
-                } else {
-                    console.log(`下载文件 ${fileName} 失败：无法获取到文件路径。`, error);
-                    this.createPopup(`下载文件 ${fileName} 失败`);
-                }
-            } catch (error) {
-                console.log(`下载文件 ${fileName} 失败：无法获取到文件路径。`, error);
-                this.createPopup(`下载文件 ${fileName} 失败：无法获取到文件路径。`);
-                return '';
             }
         },
 
@@ -962,6 +887,7 @@ export default {
                 this.createPopup("error", `下载 ${fileName} 发生错误！`);
             });
         },
+
         /* 分块下载 */
         async multipartDownload(filePath, fileItem, task) {
             try {
@@ -1232,7 +1158,7 @@ export default {
                 // 初始化当前目录信息
                 let userId = this.userInfo.userId;
                 try {
-                    const dirResponse = await axios(apiEndpoints.fsParseDirPath(this.path, userId));
+                    const dirResponse = await axios(apiEndpoints.fsGetRootDir(userId));
                     if (dirResponse.data.code === 200) {
                         this.dir = await dirResponse.data.data;
                         this.dirNodes.push(this.dir);

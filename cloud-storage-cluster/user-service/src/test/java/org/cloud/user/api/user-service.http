@@ -1,0 +1,89 @@
+### 邮箱验证
+POST http://{{mail.base_url}}/verify
+Content-Type: application/json
+
+{
+  "email": "{{user_meta.email}}"
+}
+
+### 用户注册
+POST http://{{users.base_url}}/register
+Content-Type: application/json
+
+{
+  "email": "{{user_meta.email}}",
+  "username": "test_user2",
+  "password": "pwd_test_123",
+  "code": "dSD14U"
+}
+
+### 用户登录
+POST http://{{users.base_url}}/login
+Content-Type: application/json
+
+{
+  "email": "{{user_meta.email}}",
+  "password":"pwd_test_123",
+  "code": "PrdT0G"
+}
+
+### 查询用户信息
+GET http://{{users.base_url}}/info
+Authorization: Bearer {{user_meta.token}}
+
+### 注销登录
+POST http://{{users.base_url}}/logout
+Authorization: Bearer {{user_meta.token}}
+
+### 重置密码
+POST http://{{users.base_url}}/reset_pwd
+Content-Type: application/json
+
+{
+  "email": "{{user_meta.email}}",
+  "code": "Y6QOKP",
+  "newPassword": "pwd_test_123"
+}
+
+### 更新密码
+POST http://{{users.base_url}}/update_pwd
+Content-Type: application/json
+
+{
+  "email": "{{user_meta.email}}",
+  "password": "pwd_test_123",
+  "newPassword": "pwd_new_123"
+}
+
+### 更新用户信息
+POST http://{{users.base_url}}/update_info
+Content-Type: application/json
+
+{
+  "userId": "{{user_meta.userId}}",
+  "username": "user_lqw",
+  "bio": "热爱分享的小仓鼠",
+  "avatar": "user-avatars/b17c34d2-aebc-4c9a-85cf-6720d0476d6a/3321073eb7988011e892188a73e40f1c.png"
+}
+
+### 查询已使用存储容量
+GET http://{{users.base_url}}/used_capacity?userId={{user_meta.userId}}
+
+### 查询用户状态
+GET http://{{users.base_url}}/status?userId={{user_meta.userId}}
+
+### 上传头像
+POST http://{{users.base_url}}/upload_avatar
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="userId"
+Content-Type: text/plain
+
+{{user_meta.userId}}
+--WebAppBoundary
+Content-Disposition: form-data; name="avatar"; filename="avatar.png"
+Content-Type: image/png
+
+< ./avatar.png
+--WebAppBoundary--

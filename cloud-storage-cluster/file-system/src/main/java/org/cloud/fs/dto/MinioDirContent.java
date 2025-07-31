@@ -16,8 +16,23 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 public class MinioDirContent implements Serializable {
-    private String path; // 绝对路径
-    private String directoryId; // 目录ID
-    private List<MinioDirectory> directories; // 目录列表
-    private List<MinioFile> files; // 文件列表
+    /**
+     * 目录ID
+     */
+    private String directoryId;
+
+    /**
+     * 目录的绝对路径
+     */
+    private String path;
+
+    /**
+     * 子目录对象列表
+     */
+    private List<MinioDirectory> directories;
+
+    /**
+     * 子文件对象列表
+     */
+    private List<MinioFile> files;
 }

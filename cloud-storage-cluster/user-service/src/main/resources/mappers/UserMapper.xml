@@ -2,24 +2,38 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.cloud.user.mappers.UserMapper">
 
+    <!-- 根据用户ID查询用户 -->
     <select id="selectById" parameterType="java.util.UUID" resultType="org.cloud.user.model.User">
         SELECT * FROM users WHERE user_id = #{userId}
     </select>
 
+    <!-- 根据邮箱查询用户 -->
     <select id="selectByEmail" parameterType="java.lang.String" resultType="org.cloud.user.model.User">
         SELECT * FROM users WHERE email = #{email}
     </select>
 
+    <!-- 更加用户名称查询用户 -->
     <select id="selectByUsername" parameterType="java.lang.String" resultType="org.cloud.user.model.User">
         SELECT * FROM users WHERE username = #{username}
     </select>
 
+    <!-- 查询已使用容量 -->
     <select id="selectUsedCapacity" parameterType="java.util.UUID"  resultType="java.math.BigDecimal">
         SELECT used_capacity FROM users WHERE user_id = #{userId}
     </select>
 
+    <!-- 查询用户状态 -->
     <select id="selectUserStatus" parameterType="java.util.UUID" resultType="java.lang.String">
         SELECT user_status FROM users WHERE user_id = #{userId}
+    </select>
+
+    <!-- 查询用户是否存在 -->
+    <select id="isUserExist" resultType="java.lang.Boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM users
+            WHERE email = #{email}
+        );
     </select>
 
     <!-- 创建用户 -->
@@ -29,16 +43,9 @@
     </insert>
 
     <!-- 更新整个用户数据 -->
-    <update id="updateUser" parameterType="org.cloud.user.model.User">
+    <update id="updateUserInfo" parameterType="map">
         UPDATE users
-        SET email = #{email},
-            username = #{username},
-            created_at = #{createdAt},
-            last_login_at = #{lastLoginAt},
-            user_status = #{userStatus},
-            role = #{role},
-            storage_capacity = #{storageCapacity},
-            used_capacity = #{usedCapacity},
+        SET username = #{username},
             bio = #{bio},
             avatar = #{avatar}
         WHERE user_id = #{userId}
@@ -53,12 +60,20 @@
     <update id="updatePassword" parameterType="map">
         UPDATE users SET password_hash = #{passwordHash} WHERE email = #{email}
     </update>
+
+    <!-- 更新已使用存储容量 -->
     <update id="updateUsedCapacity" parameterType="map">
         UPDATE users SET used_capacity = #{usedCapacity} WHERE user_id = #{userId}
     </update>
 
+    <!-- 更新用户账号状态 -->
     <update id="updateUserStatus" parameterType="map">
         UPDATE users SET user_status = #{userStatus} WHERE user_id = #{userId}
+    </update>
+
+    <!-- 更新头像url -->
+    <update id="updateAvatar" parameterType="map">
+        UPDATE users SET avatar = #{avatar} WHERE user_id = #{userId}
     </update>
 
     <!-- 删除用户 -->

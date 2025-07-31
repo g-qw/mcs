@@ -1,0 +1,19 @@
+{
+  "serverUrl": "http://localhost:8102",
+  "pathPrefix": "",
+  "allInOne": true,
+  "allInOneDocFileName": "upload-service-doc.html",
+  "outPath": "target/smart-doc",
+  "style": "xt256",
+  "createDebugPage": false,
+  "packageFilters": "org.cloud.upload.controller.*",
+  "revisionLogs": [
+    {
+      "version": "1.0",
+      "revisionTime": "2025-07-31 13:09",
+      "status": "创建",
+      "author": "lqw",
+      "remarks": "文件上传服务，提供单文件、多文件、分块上传功能"
+    }
+  ]
+}

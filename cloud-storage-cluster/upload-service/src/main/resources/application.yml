@@ -33,5 +33,5 @@ spring:
 
 logging:
   level:
-    # root: info
-    root: OFF
+    root: info
+    # root: OFF

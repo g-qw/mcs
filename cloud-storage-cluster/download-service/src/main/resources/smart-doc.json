@@ -1,0 +1,19 @@
+{
+  "serverUrl": "http://localhost:8103",
+  "pathPrefix": "",
+  "allInOne": true,
+  "allInOneDocFileName": "download-service-doc.html",
+  "outPath": "target/smart-doc",
+  "style": "xt256",
+  "createDebugPage": false,
+  "packageFilters": "org.cloud.download.controller.*",
+  "revisionLogs": [
+    {
+      "version": "1.0",
+      "revisionTime": "2025-07-31 13:09",
+      "status": "创建",
+      "author": "lqw",
+      "remarks": "文件下载服务，提供单文件、分块下载、zip打包下载功能"
+    }
+  ]
+}

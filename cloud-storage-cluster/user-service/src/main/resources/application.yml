@@ -1,6 +1,10 @@
 server:
   port: 8100
 
+minio:
+  endpoint: http://127.0.0.1:9000
+  # accessKey 和 secretKey 在程序参数配置
+
 spring:
   application:
     name: user-service

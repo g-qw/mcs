@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 public class MinioFile {
     private String fileId;  // 文件 ID, 实际是 UUID 类型
 
+    @NotNull(message = "目录ID不能为空")
     @UUID(message = "目录 ID 必须是有效的 UUID 格式")
     private String directoryId;  // 目录 ID, 实际是 UUID 类型
 

@@ -1,0 +1,22 @@
+{
+  "serverUrl": "http://localhost:8100",
+  "pathPrefix": "",
+  "allInOne": true,
+  "allInOneDocFileName": "user-service-doc.html",
+  "outPath": "target/smart-doc",
+  "style": "xt256",
+  "createDebugPage": false,
+  "packageFilters": "org.cloud.user.controller.*",
+  "revisionLogs": [
+    {
+      "version": "1.0",
+      "revisionTime": "2025-07-29 15:45",
+      "status": "创建",
+      "author": "lqw",
+      "remarks": "用户服务，提供用户的注册、登录、用户信息管理等等服务"
+    }
+  ],
+  "ignoreRequestParams": [
+    "org.springframework.web.server.ServerWebExchange"
+  ]
+}

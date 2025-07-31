@@ -121,6 +121,21 @@ export const apiEndpoints = {
         }
     ),
 
+    userUploadAvatar: (userId, avatar) => { // 上传头像
+        const formData = new FormData();
+        formData.append(userId);
+        formData.append("avatar", avatar);
+
+        return {
+            url: `${API_USER_URL}/upload_avatar`,
+            method: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        }
+    },
+
     /* ==================== 邮件服务接口 ==================== */
     sendEmailCode: (email) => ( // 发送邮件验证码
         {
@@ -249,15 +264,15 @@ export const apiEndpoints = {
      * @returns 
      */
     uploadComplete: (bucketName, objectName, uploadId, contentType) => { // 完成分片上传
-        const formData = new FormData();
-        formData.append("bucketName", bucketName);
-        formData.append("objectName", objectName);
-        formData.append("uploadId", uploadId);
-        formData.append("contentType", contentType);
         return {
             url: `${API_FU_URL}/upload/multipart/complete`,
             method: 'POST',
-            data: formData,
+            data: {
+                bucketName: bucketName,
+                objectName: objectName,
+                uploadId: uploadId,
+                contentType: contentType
+            },
             headers: {
                 'Authorization': `Bearer ${getToken()}`
             }
@@ -310,7 +325,8 @@ export const apiEndpoints = {
     },
 
     /* ==================== 文件系统服务接口 ==================== */
-    fsCreatRootDir(userId) { // 创建文件系统的根目录
+    /* 创建文件系统的根目录 */
+    fsCreatRootDir(userId) { 
         return {
             url: `${API_FS_URL}/root_dir?userId=${userId}`,
             method: 'POST',
@@ -320,20 +336,83 @@ export const apiEndpoints = {
         }
     },
 
-    fsIsDirectoryExist(directoryId) { // 检查目录是否存在
+    /* 获取文件系统的根目录  */
+    fsGetRootDir(userId) { 
         return {
-            url: `${API_FS_URL}/is_dir_exist?directoryId=${directoryId}`,
-            method: `GET`,
+            url: `${API_FS_URL}/get_root_dir?userId=${userId}`,
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${getToken()}`
             }
         }
     },
 
-    fsIsFileExist(fileId) { // 检查文件是否存在
+    /* 在文件系统中创建目录 */
+    fsCreateDir(parentDirectoryId, userId, name) { 
         return {
-            url: `${API_FS_URL}/is_file_exist?fileId=${fileId}`,
+            url: `${API_FS_URL}/create_dir`,
+            method: 'POST',
+            data: {
+                parentDirectoryId: parentDirectoryId,
+                userId: userId,
+                name: name
+            },
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        }
+    },
+
+    /* 获取目录名称 */
+    fsGetDirName(directoryId) {
+        return {
+            url: `${API_FS_URL}/get_dir_name?directoryId=${directoryId}`,
             method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        }
+    },
+
+    /* 更新目录名称 */
+    fsUpdateDirName(directoryId, name) {
+        return {
+            url: `${API_FS_URL}/update_dir_name?directoryId=${directoryId}&name=${name}`,
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        }
+
+    },
+
+    /* 删除目录 */
+    fsDeleteDir(directoryId) {
+        return {
+            url: `${API_FS_URL}/delete_dir?directoryId=${directoryId}`,
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        }
+    },
+
+    /* 移动目录 */
+    fsMoveDir(directoryId, parentDirectoryId) {
+        return {
+            url: `${API_FS_URL}/move_dir?directoryId=${directoryId}&parentDirectoryId=${parentDirectoryId}`,
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        }
+    },
+
+    /* 最重要的接口之一，将当前目录的数据加载到 Pinia 中 */
+    fsLoadDir(directoryId) { // 加载目录
+        return {
+            url: `${API_FS_URL}/load_dir?directoryId=${directoryId}`,
+            method: 'POST',
             headers: {
                 'Authorization': `Bearer ${getToken()}`
             }
@@ -369,26 +448,6 @@ export const apiEndpoints = {
         }
     },
 
-    fsGetFile(fileId) { // 获取文件
-        return {
-            url: `${API_FS_URL}/get_file?fileId=${fileId}`,
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsGetFileName(fileId) { // 获取文件名称
-        return {
-            url: `${API_FS_URL}/get_file_name?fileId=${fileId}`,
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
     fsDeleteFile(fileId) {
         return {
             url: `${API_FS_URL}/delete_file?fileId=${fileId}`,
@@ -399,164 +458,10 @@ export const apiEndpoints = {
         }
     },
 
-    /**
-     * 
-     * @param {String} fileId 文件ID
-     * @param {String} objectName 文件的绝对路径
-     * @returns 
-     */
-    fsUpdateFileName(fileId, objectName) {
-        return {
-            url: `${API_FS_URL}/update_file_name`,
-            method: 'POST',
-            data: {
-                fileId: fileId,
-                objectName: objectName
-            },
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
     fsMoveFile(fileId, directoryId) {
         return {
-            url: `${API_FS_URL}/move_file`,
+            url: `${API_FS_URL}/move_file?fileId=${fileId}&directoryId=${directoryId}`,
             method: 'POST',
-            data: {
-                fileId: fileId,
-                directoryId: directoryId
-            },
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsCreateDir(parentDirectoryId, userId, name) { // 在文件系统中创建目录
-        return {
-            url: `${API_FS_URL}/create_dir`,
-            method: 'POST',
-            data: {
-                parentDirectoryId: parentDirectoryId,
-                userId: userId,
-                name: name
-            },
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsGetDir(directoryId) {
-        return {
-            url: `${API_FS_URL}/get_dir?directoryId=${directoryId}`,
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsGetDirName(directoryId) {
-        return {
-            url: `${API_FS_URL}/get_dir_name?directoryId=${directoryId}`,
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    /* 删除目录 */
-    fsDeleteDir(directoryId) {
-        return {
-            url: `${API_FS_URL}/delete_dir?directoryId=${directoryId}`,
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsUpdateDirName(directoryId, name) {
-        return {
-            url: `${API_FS_URL}/update_dir_name?directoryId=${directoryId}&name=${name}`,
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-
-    },
-
-    fsMoveDir(directoryId, parentDirectoryId) {
-        return {
-            url: `${API_FS_URL}/move_dir`,
-            method: 'POST',
-            data: {
-                directoryId: directoryId,
-                parentDirectoryId: parentDirectoryId
-            },
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    /* 最重要的接口之一，可以将当前目录的数据加载到 Pinia 中 */
-    fsLoadDir(directoryId) { // 加载目录
-        return {
-            url: `${API_FS_URL}/load_dir?directoryId=${directoryId}`,
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsParseDirPath(path, userId) { // 解析目录路径
-        return {
-            url: `${API_FS_URL}/parse_dir_path`,
-            method: 'POST',
-            data: {
-                path: path,
-                userId: userId
-            },
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsParseFilePath(path, userId) { // 解析文件路径
-        return {
-            url: `${API_FS_URL}/parse_file_path`,
-            method: 'POST',
-            data: {
-                path: path,
-                userId: userId
-            },
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsGetFilePath(fileId) { // 获取文件路径
-        return {
-            url: `${API_FS_URL}/get_file_path?fileId=${fileId}`,
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
-        }
-    },
-
-    fsGetDirPath(directoryId) {
-        return {
-            url: `${API_FS_URL}/get_dir_path?directoryId=${directoryId}`,
-            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${getToken()}`
             }

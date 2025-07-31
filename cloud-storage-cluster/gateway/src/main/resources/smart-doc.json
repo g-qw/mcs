@@ -1,0 +1,20 @@
+{
+  "serverUrl": "http://localhost:75",
+  "pathPrefix": "",
+  "allInOne": true,
+  "allInOneDocFileName": "gateway-doc.html",
+  "outPath": "target/smart-doc",
+  "style": "xt256",
+  "coverOld": true,
+  "createDebugPage": false,
+  "packageFilters": "org.cloud.gateway.controller.*",
+  "revisionLogs": [
+    {
+      "version": "1.0",
+      "revisionTime": "2025-07-29 13:21",
+      "status": "创建",
+      "author": "lqw",
+      "remark": "网关服务系统，提供身份校验、服务路由、负载均衡等等功能"
+    }
+  ]
+}

@@ -26,26 +26,9 @@ public interface FileMapper {
                    @Param("size") Long size);
 
     /**
-     * 更新文件
-     * @param directoryId 目录ID
-     * @param userId 用户ID
-     * @param objectName 文件名
-     * @param size 文件大小
-     * @return 受影响的行数
+     * 查询指定目录下是否存在特定名称的文件
      */
-    int updateFile(@Param("fileId") UUID fileId,
-                   @Param("directoryId") UUID directoryId,
-                   @Param("userId") UUID userId,
-                   @Param("objectName") String objectName,
-                   @Param("size") Long size);
-
-    /**
-     * 更新文件名
-     * @param fileId 文件ID
-     * @param objectName 文件名
-     * @return 受影响的行数
-     */
-    int updateFileName(@Param("fileId") UUID fileId, @Param("objectName") String objectName);
+    Boolean isFileExist(@Param("directoryId") UUID directoryId, @Param("objectName") String objectName);
 
     /**
      * 删除文件
@@ -63,20 +46,6 @@ public interface FileMapper {
     int moveFile(@Param("fileId") UUID fileId, @Param("directoryId") UUID directoryId);
 
     /**
-     * 检查文件是否存在
-     * @param fileId 文件ID
-     * @return 文件是否存在, true 表示存在, false 表示不存在
-     */
-    Boolean isFileExist(@Param("fileId") UUID fileId);
-
-    /**
-     * 根据文件ID查询目录ID
-     * @param fileId 文件ID
-     * @return 目录ID
-     */
-    String getDirectoryId(@Param("fileId") UUID fileId);
-
-    /**
      * 获取文件的父目录
      * @param fileId 文件ID
      * @return 父目录对象
@@ -84,27 +53,23 @@ public interface FileMapper {
     MinioDirectory getParentDirectory(@Param("fileId") UUID fileId);
 
     /**
-     * 根据文件ID查询文件
-     * @param fileId 文件ID
-     * @return 文件对象
-     */
-    MinioFile getFileById(@Param("fileId") UUID fileId);
-
-    /**
-     * 根据目录ID和文件名称查询文件
-     * @param directoryId 目录ID
-     * @param objectName 文件名称
-     * @return 文件对象
-     */
-    MinioFile getFileByName(@Param("directoryId") UUID directoryId,
-                            @Param("objectName") String objectName);
-
-    /**
      * 查询指定文件夹ID下的所有文件
      * @param directoryId 文件夹ID
-     * @return 文件列表
+     * @return 文件对象列表
      */
     List<MinioFile> getFilesByDirectoryId(@Param("directoryId") UUID directoryId);
+
+    /**
+     * 统计文件夹下的文件总数
+     */
+    long countFilesByDirectoryId(@Param("directoryId") UUID directoryId);
+
+    /**
+     * 分页查询指定文件夹ID下的20个文件
+     */
+    List<MinioFile> getFileByDirectoryIdPaged(@Param("directoryId") UUID directoryId,
+                                              @Param("limit") int limit,
+                                              @Param("offset") int offset);
 
     /**
      * 查询指定文件夹ID下的所有文件ID
@@ -119,6 +84,13 @@ public interface FileMapper {
      * @return 用户ID
      */
     String getUserIdByFileId(@Param("fileId") UUID fileId);
+
+    /**
+     * 根据文件ID查询文件所属目录ID
+     * @param fileId 文件ID
+     * @return 父目录ID
+     */
+    String getDirectoryIdByFileId(@Param("fileId") UUID fileId);
 
     /**
      * 根据文件ID查询文件名

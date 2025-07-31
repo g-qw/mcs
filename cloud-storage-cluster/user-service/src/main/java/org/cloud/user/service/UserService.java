@@ -1,16 +1,17 @@
 package org.cloud.user.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.cloud.user.dto.ApiResponse;
+import org.cloud.user.dto.UpdateUserInfoRequest;
 import org.cloud.user.dto.UserInfo;
-import org.cloud.user.exception.UserNotFound;
+import org.cloud.user.exception.RemoteFileSystemException;
+import org.cloud.user.exception.UserAlreadyExistException;
+import org.cloud.user.exception.UserNotFoundException;
 import org.cloud.user.model.User;
 import org.cloud.user.mappers.UserMapper;
 import org.cloud.user.util.secure.PasswordHasher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -18,27 +19,28 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class UserService {
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserMapper userMapper;
     private final PasswordHasher passwordHasher;
     private final WebClient webClient;
 
-    public UserService(UserMapper userMapper, PasswordHasher passwordHasher, WebClient webClient) {
+    public UserService(UserMapper userMapper,
+                       PasswordHasher passwordHasher,
+                       WebClient webClient) {
         this.userMapper = userMapper;
         this.passwordHasher = passwordHasher;
         this.webClient = webClient;
     }
 
-    public Mono<String> register(String email, String username, String password)  {
+    public Mono<String> register(String email, String username, String password) throws UserAlreadyExistException {
         // 检查邮箱是否已注册
-        if (userMapper.selectByEmail(email) != null) {
-            throw new RuntimeException("邮箱已注册");
+        if (userMapper.isUserExist(email)) {
+            return Mono.error(new UserAlreadyExistException(email));
         }
 
         // 对密码明文进行加密
-        byte[] encryptedPassword = null;
+        byte[] encryptedPassword;
         try {
             encryptedPassword = passwordHasher.hashPassword(password);
         } catch (Exception e) {
@@ -46,29 +48,42 @@ public class UserService {
             throw new RuntimeException("内部服务器错误");
         }
 
-        // 创建用户
         User user = new User(email, username, encryptedPassword);
-        userMapper.insertUser(user);
-
-        // 创建用户的根目录
-        return webClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("http") // 指定协议
-                        .host("localhost") // 指定主机
-                        .port(8104) // 指定端口
-                        .path("/root_dir") // 指定路径
-                        .queryParam("userId", user.getUserId()) // 添加请求参数
-                        .build())
-                .retrieve() // 发起请求并获取响应
-                .bodyToMono(ApiResponse.class) // 将响应体转换为 ApiResponse 类型
-                .flatMap(response -> {
-                    if (response.getCode() == 200) {
-                        return Mono.just(user.getUserId());
-                    } else {
-                        userMapper.deleteUser(UUID.fromString(user.getUserId()));  // 撤销用户的注册
-                        return Mono.empty();
+        return Mono.fromCallable(
+                    // 创建用户
+                    () -> {
+                        int res = userMapper.insertUser(user);
+                        if(res <= 0) {
+                            throw new RuntimeException("用户账号创建失败");
+                        }
+                        return user.getUserId();
                     }
-                });
+                ).flatMap(
+                userId -> webClient.post()
+                        .uri(uriBuilder -> uriBuilder
+                                .scheme("http") // 指定协议
+                                .host("localhost") // 指定主机
+                                .port(8104) // 指定端口
+                                .path("/root_dir") // 指定路径
+                                .queryParam("userId", userId) // 添加请求参数
+                                .build())
+                        .retrieve() // 发起请求并获取响应
+                        .bodyToMono(ApiResponse.class) // 将响应体转换为 ApiResponse 类型
+                        .flatMap(response -> {
+                                if (response.getCode() == 200) {
+                                    return Mono.just(userId);
+                                } else {
+                                    return Mono.error(new RemoteFileSystemException(response.getCode(), response.getMsg()));
+                                }
+                            }
+                        )
+                ).onErrorResume(
+                e -> {
+                        logger.error("注册失败：{}", e.getMessage());
+                        userMapper.deleteUser(UUID.fromString(user.getUserId()));
+                        return Mono.error(e); // 继续抛出错误
+                    }
+                );
     }
 
     public String login(String email, String password) {
@@ -76,7 +91,7 @@ public class UserService {
 
         // 检查用户是否存在
         if (user == null) {
-            throw new UserNotFound();
+            throw new UserNotFoundException();
         }
 
         // 检查用户是否被冻结
@@ -150,9 +165,9 @@ public class UserService {
         }
     }
 
-    public void updateUserInfo(UserInfo userInfo) {
+    public void updateUserInfo(UUID userId, String username, String bio, String avatar) {
         try {
-            userMapper.updateUser(userInfo);
+            userMapper.updateUserInfo(userId, username, bio, avatar);
         } catch (Exception e) {
             logger.error("更新用户信息出现错误", e);
             throw new RuntimeException("内部服务器错误");
@@ -164,6 +179,15 @@ public class UserService {
             userMapper.updateUsedCapacity(UUID.fromString(userId), usedCapacity);
         } catch (Exception e) {
             logger.error("更新已使用容量出现错误", e);
+            throw new RuntimeException("内部服务器错误");
+        }
+    }
+
+    public void updateAvatar(String userId, String avatar) {
+        try {
+            userMapper.updateAvatar(UUID.fromString(userId), avatar);
+        } catch (Exception e) {
+            logger.error("更新头像 url 出现错误：", e);
             throw new RuntimeException("内部服务器错误");
         }
     }

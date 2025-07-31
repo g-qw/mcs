@@ -11,14 +11,29 @@ import java.time.format.DateTimeFormatter;
 @Setter
 @Getter
 public class ApiResponse<T> {
+    /*
+     * HTTP响应状态码
+     */
     @JsonProperty("code")
-    private int code; // 状态码
+    private int code;
+
+    /*
+     * 响应的消息提示
+     */
     @JsonProperty("msg")
-    private String msg; // 消息
+    private String msg;
+
+    /*
+     * 响应的数据
+     */
     @JsonProperty("data")
     private T data; // 返回的数据
+
+    /*
+     * 响应的时间戳，格式化后的日期和时间
+     */
     @JsonProperty("timestamp")
-    private String timestamp; // 时间戳，格式化后的日期和时间
+    private String timestamp;
 
     // 构造方法
     public ApiResponse() {
