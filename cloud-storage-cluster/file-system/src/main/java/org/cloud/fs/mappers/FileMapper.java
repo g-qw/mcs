@@ -104,4 +104,11 @@ public interface FileMapper {
      * @param userId 用户ID
      */
     Long computeUsedStorage(@Param("userId") UUID userId);
+
+    /**
+     * 查询指定文件ID列表的所有文件的总字节大小
+     * @param fileIds 文件ID列表
+     * @return 对应的所有文件的总大小，单位字节(byte)
+     */
+    Long getTotalSizeByFileIds(@Param("fileIds") List<String> fileIds);
 }

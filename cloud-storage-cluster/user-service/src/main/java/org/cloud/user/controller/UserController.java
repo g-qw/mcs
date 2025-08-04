@@ -7,7 +7,6 @@ import org.cloud.user.exception.InvalidImageTypeException;
 import org.cloud.user.exception.RemoteFileSystemException;
 import org.cloud.user.exception.UserAlreadyExistException;
 import org.cloud.user.exception.UserNotFoundException;
-import org.cloud.user.mappers.UserMapper;
 import org.cloud.user.service.UserService;
 import org.cloud.user.util.file.FileHasher;
 import org.slf4j.Logger;
@@ -36,25 +35,24 @@ public class UserController {
     private final static Logger logger = LoggerFactory.getLogger(UserController.class);
     private final static String VERIFICATION_CODE_PREFIX = "verification:"; // 验证码的 redis 键前缀
     private final static String AVATAR_BUCKET = "user-avatars";
+    private final static String AUTHORIZATION_TOKEN_PREFIX = "authorization:";
 
     private final UserService userService;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
     private final ExecutorService executorService;
     private final FileHasher fileHasher;
     private final MinioClient minioClient;
-    private final UserMapper userMapper;
 
     @Autowired
     public UserController(UserService userService,
                           ReactiveRedisTemplate<String, String> redisTemplate,
                           ExecutorService executorService,
-                          FileHasher fileHasher, MinioClient minioClient, UserMapper userMapper) {
+                          FileHasher fileHasher, MinioClient minioClient) {
         this.userService = userService;
         this.redisTemplate = redisTemplate;
         this.executorService = executorService;
         this.fileHasher = fileHasher;
         this.minioClient = minioClient;
-        this.userMapper = userMapper;
     }
 
     /**
@@ -137,7 +135,8 @@ public class UserController {
 
                         // 生成 token，并将 token 存入 redis
                         String token = UUID.randomUUID().toString();
-                        redisTemplate.opsForValue().set(token, userId, Duration.ofHours(24)).subscribe();
+                        String authKey = AUTHORIZATION_TOKEN_PREFIX + token;
+                        redisTemplate.opsForValue().set(authKey, userId, Duration.ofHours(24)).subscribe();
 
                         return ApiResponse.success(token);
                     } catch (Exception e) {
@@ -169,7 +168,8 @@ public class UserController {
                             }
 
                             // 根据 token 获取用户id，用户id即 bucket
-                            return redisTemplate.opsForValue().get(token).flatMap(
+                            String key = AUTHORIZATION_TOKEN_PREFIX + token;
+                            return redisTemplate.opsForValue().get(key).flatMap(
                                     userId -> {
                                         try {
                                             UserInfo userInfo = userService.getUserInfo(userId);
@@ -218,7 +218,8 @@ public class UserController {
         }
 
         // Redis中删除token
-        return redisTemplate.opsForValue().delete(token)
+        String key = AUTHORIZATION_TOKEN_PREFIX + token;
+        return redisTemplate.opsForValue().delete(key)
             .flatMap(deletedCount -> {
                 if (Boolean.TRUE.equals(deletedCount)) {
                     return Mono.just(ApiResponse.success("注销登录成功"));

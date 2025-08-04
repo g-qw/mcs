@@ -30,6 +30,18 @@
         <java.version>21</java.version>
     </properties>
     <dependencies>
+        <!-- Spring WebFlux -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- 响应式的Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+        </dependency>
+
         <!-- MyBatis Starter -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>

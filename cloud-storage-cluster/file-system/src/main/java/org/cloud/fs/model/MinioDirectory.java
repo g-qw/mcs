@@ -34,6 +34,9 @@ public class MinioDirectory {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt; // 文件夹最后更新时间
 
+    @Size
+    private Long size;
+
     /**
      * 构造方法, 用于数据库中添加新目录记录
      * @param parentDirectoryId 父目录 ID

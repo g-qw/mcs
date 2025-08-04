@@ -1,7 +1,6 @@
 package org.cloud.user.service;
 
 import org.cloud.user.dto.ApiResponse;
-import org.cloud.user.dto.UpdateUserInfoRequest;
 import org.cloud.user.dto.UserInfo;
 import org.cloud.user.exception.RemoteFileSystemException;
 import org.cloud.user.exception.UserAlreadyExistException;

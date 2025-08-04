@@ -30,6 +30,13 @@
         WHERE directory_id = #{directoryId}
     </update>
 
+    <!-- 更新目录大小 -->
+    <update id="updateSize" parameterType="map">
+        UPDATE directories
+        SET size = #{size}
+        WHERE directory_id = #{directoryId}
+    </update>
+
     <!-- 查询用户的根目录ID -->
     <select id="getRootDirectoryId" parameterType="java.util.UUID" resultType="java.lang.String">
         SELECT directory_id
@@ -91,4 +98,26 @@
         WHERE parent_directory_id = #{parentDirectoryId}
     </select>
 
+    <!-- 查询目录大小 -->
+    <select id="getDirectorySize" parameterType="java.util.UUID" resultType="java.lang.Long">
+        SELECT COALESCE(SUM(total_size), 0) AS directory_size
+        FROM(
+            SELECT SUM(f.size) AS total_size
+            FROM files f
+            WHERE f.directory_id = #{directoryId}
+
+            UNION ALL
+
+            SELECT SUM(d.size) AS total_size
+            FROM directories d
+            WHERE d.parent_directory_id = #{directoryId}
+        ) as combined;
+    </select>
+
+    <!-- 查询目录的Size字段 -->
+    <select id="getSizeByDirectoryId" parameterType="java.util.UUID" resultType="java.lang.Long">
+        SELECT size
+        FROM directories
+        WHERE directory_id = #{directoryId}
+    </select>
 </mapper>

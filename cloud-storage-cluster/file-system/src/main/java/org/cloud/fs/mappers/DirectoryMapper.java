@@ -45,6 +45,13 @@ public interface DirectoryMapper {
     int moveDirectory(@Param("directoryId") UUID directoryId, @Param("parentDirectoryId") UUID parentDirectoryId);
 
     /**
+     * 更新目录大小
+     * @param size 新的目录大小
+     * @return 受影响的行数
+     */
+    int updateSize(@Param("directoryId") UUID directoryId, @Param("size") Long size);
+
+    /**
      * 检查目录是否存在
      * @param directoryId 目录ID
      * @return 目录是否存在, true 表示存在, false 表示不存在
@@ -99,4 +106,16 @@ public interface DirectoryMapper {
      * @return 子目录列表
      */
     List<MinioDirectory> getDirectoriesByParentDirectoryId(@Param("parentDirectoryId") UUID parentDirectoryId);
+
+    /**
+     * 查询目录的存储大小
+     * @param directoryId 目录ID
+     * @return 目录下的文件夹和文件占用的总存储空间，单位字节(byte)
+     */
+    Long getDirectorySize(@Param("directoryId") UUID directoryId);
+
+    /**
+     * 查询目录的 size 字段
+     */
+    Long getSizeByDirectoryId(@Param("directoryId") UUID directoryId);
 }

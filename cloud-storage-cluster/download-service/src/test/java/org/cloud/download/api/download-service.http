@@ -1,0 +1,37 @@
+### 单文件下载
+GET http://{{fd.base_url}}/download/file?bucket=user-avatars&object=%2Fdefault%2F0.png
+
+### 初始化zip下载
+POST http://{{fd.base_url}}/download/init_zip_download
+Content-Type: application/json
+
+{
+  "bucket": "3fdcb6f1-4fd3-49c7-bf17-78a22695374f",
+  "files": [
+    "/images/ANIME-PICTURES.NET_-_729471-1920x1080-honkai+impact+3rd-benghuai+xueyuan-honkai+(series)-kiana+kaslana-kiana+kaslana+(herrscher+of+flamescion)-star-ring.png",
+    "/images/ANIME-PICTURES.NET_-_744184-4000x2250-xenoblade-xenoblade+2-mythra+(xenoblade)-roi+(liu+tian)-single-long+hair.jpeg",
+    "/images/ANIME-PICTURES.NET_-_755336-3823x2150-genshin+impact-sangonomiya+kokomi-chen+bin-single-long+hair-looking+at+viewer.jpg",
+    "/images/ANIME-PICTURES.NET_-_759075-2204x1240-original-rune+xiao-highres-wide+image-signed-cloud+(clouds).png",
+    "/images/ANIME-PICTURES.NET_-_759076-2204x1240-original-rune+xiao-highres-wide+image-signed-sky.png",
+    "/images/ANIME-PICTURES.NET_-_768655-2666x1500-honkai +star+rail-honkai+(series)-march+7th+(honkai +star+rail)-trailblazer+(honkai +star+rail)-stelle+(honkai +star+rail)-criin.jpg",
+    "/images/ANIME-PICTURES.NET_-_771305-2204x1240-original-rune+xiao-highres-wide+image-signed-sky.png"
+  ],
+  "fileIds":[
+    "63e4b619-6e89-48f7-9685-cb9b9855c63c",
+    "8ec5a4c4-d755-418f-abb7-5657e3ca3f58",
+    "eaa8e363-c05d-4dec-931e-47047a8ff8a0",
+    "62f6a726-c404-40b5-abb2-7949dfc3b35a",
+    "1278ca26-c0d1-4b9e-b0ba-aad78f35f6b0",
+    "bfa3129b-d168-477b-b804-e586eb4613ce",
+    "ae827456-4730-49f5-959c-9cf9dc663996"
+  ]
+}
+
+### zip下载
+POST http://{{fd.base_url}}/download/zip_download
+Content-Type: application/json
+
+{
+  "zipTaskId": "5542c99b-b60f-4299-a757-4e9d2987f542",
+  "target": "images.zip"
+}

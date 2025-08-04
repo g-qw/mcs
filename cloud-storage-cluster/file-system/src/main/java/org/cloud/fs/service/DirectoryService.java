@@ -222,12 +222,12 @@ public class DirectoryService {
          // 检查目录是否不是根目录，目录不是根目录返回 true，否则false
          Mono<Boolean> isNotRootDir = Mono.fromCallable(
                  () -> !directoryMapper.getDirectoryName(directoryId).equals("/")
-         );
+         ).subscribeOn(Schedulers.fromExecutor(executor));
 
          // 检查目录是否为空，目录为空返回 true，否则false
          Mono<Boolean> dirEmpty = Mono.fromCallable(
                  () -> directoryMapper.isDirectoryEmpty(directoryId)
-         );
+         ).subscribeOn(Schedulers.fromExecutor(executor));
 
          return dirExist.filter(Boolean::booleanValue) // 检查目录是否存在，过滤掉目录不存在的情况
         .switchIfEmpty(Mono.error(new DirectoryNotFoundException(parentDirectoryId.toString()))) // 目录不存在
@@ -238,4 +238,29 @@ public class DirectoryService {
         .then(Mono.fromCallable(() -> redisTemplate.delete(pathKey))) // 清除目录缓存
         .then(Mono.fromCallable(() -> directoryMapper.moveDirectory(directoryId, parentDirectoryId))); // 移动目录
      }
+
+    /**
+     * 更新指定目录的存储大小
+     * @param directoryId 目录ID
+     * @return 更新后的目录大小
+     */
+    public Mono<Long> updateDirectorySize(UUID directoryId) {
+        return Mono.fromCallable(
+                () -> {
+                    MinioDirectory directory = directoryMapper.getDirectory(directoryId);
+                    if(directory == null) {
+                        throw new DirectoryNotFoundException(directoryId.toString());
+                    }
+
+                    Long oldSize = directoryMapper.getSizeByDirectoryId(directoryId);
+                    Long newSize = directoryMapper.getDirectorySize(directoryId);
+
+                    if(oldSize.longValue() != newSize.longValue()) {
+                        directoryMapper.updateSize(directoryId, newSize);
+                    }
+
+                    return newSize;
+                }
+        ).subscribeOn(Schedulers.fromExecutor(executor));
+    }
 }

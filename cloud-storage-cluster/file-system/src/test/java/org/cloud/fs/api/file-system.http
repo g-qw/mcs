@@ -24,7 +24,7 @@ POST http://{{fs.base_url}}/update_dir_name?directoryId=e205b2c0-915e-46f8-a4a8-
 POST http://{{fs.base_url}}/delete_dir?directoryId=6a3e7248-b6b7-4633-9d4e-fe3ecb9f4217
 
 ### 加载目录
-POST http://{{fs.base_url}}/load_dir?directoryId=adaf6cfc-bbb4-4f51-b51f-9f26ea07c5ce
+POST http://{{fs.base_url}}/load_dir?directoryId={{user_meta.root_dir}}
 
 ### 移动目录
 POST http://{{fs.base_url}}/move_dir?directoryId=adaf6cfc-bbb4-4f51-b51f-9f26ea07c5ce&parentDirectoryId=42b6b7b4-9b13-4b62-8427-850a94d84789
@@ -46,3 +46,17 @@ POST http://{{fs.base_url}}/delete_file?fileId=665b4ad9-846d-4c59-8d75-66c9fbb3f
 
 ### 移动文件
 POST http://{{fs.base_url}}/move_file?fileId=665b4ad9-846d-4c59-8d75-66c9fbb3fe34&directoryId={{user_meta.root_dir}}
+
+### 查询文件列表的总字节大小
+POST http://{{fs.base_url}}/get_files_size
+Content-Type: application/json
+
+{
+    "fileIds":[
+          "63e4b619-6e89-48f7-9685-cb9b9855c63c",
+          "8ec5a4c4-d755-418f-abb7-5657e3ca3f58",
+          "eaa8e363-c05d-4dec-931e-47047a8ff8a0",
+          "62f6a726-c404-40b5-abb2-7949dfc3b35a",
+          "1278ca26-c0d1-4b9e-b0ba-aad78f35f6b0"
+    ]
+}

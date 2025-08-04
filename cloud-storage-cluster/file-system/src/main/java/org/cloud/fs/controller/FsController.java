@@ -1,8 +1,10 @@
 package org.cloud.fs.controller;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import org.cloud.fs.dto.*;
 import org.cloud.fs.exception.*;
+import org.cloud.fs.mappers.DirectoryMapper;
 import org.cloud.fs.model.MinioDirectory;
 import org.cloud.fs.model.MinioFile;
 import org.cloud.fs.service.DirectoryService;
@@ -22,7 +24,6 @@ public class FsController {
     private final DirectoryService directoryService;
     private final FileService fileService;
     private final PathService pathService;
-
     @Autowired
     public FsController(DirectoryService directoryService,
                         FileService fileService,
@@ -133,11 +134,14 @@ public class FsController {
     public Mono<ApiResponse<MinioDirContent>> loadDirContent(@RequestParam("directoryId") @NotBlank(message = "目录ID不能为空") String directoryId) {
         UUID id = UUID.fromString(directoryId);
 
-        return Mono.zip(
-                pathService.getAbsoluteDirectoryPath(id),
-                directoryService.getChildDirectories(id),
-                fileService.getFiles(id)
-        ).map(
+        return directoryService.updateDirectorySize(id)
+         .then(
+                Mono.zip(
+                        pathService.getAbsoluteDirectoryPath(id),
+                        directoryService.getChildDirectories(id),
+                        fileService.getFiles(id)
+                )
+         ).map(
                 tuple -> {
                     String path = tuple.getT1();
                     List<MinioDirectory> dirs = tuple.getT2();
@@ -226,5 +230,14 @@ public class FsController {
                                 || e instanceof DirectoryNotFoundException,
                         e -> Mono.just(ApiResponse.failure(404, e.getMessage()))
                 );
+    }
+
+    /**
+     * 查询指定文件列表的总字节大小
+     */
+    @PostMapping("/get_files_size")
+    public Mono<ApiResponse<String>> getFilesSize(@RequestBody GetFilesSizeRequest request) {
+        return fileService.getFileListSize(request.getFileIds())
+                .map(ApiResponse::success);
     }
 }

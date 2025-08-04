@@ -1,26 +1,35 @@
 package org.cloud.download.controller;
 
 import io.minio.*;
+import io.minio.errors.MinioException;
+import org.cloud.download.dto.ApiResponse;
+import org.cloud.download.dto.GetFilesSizeRequest;
 import org.cloud.download.dto.InitZipDownloadRequest;
+import org.cloud.download.dto.ZipDownloadRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.io.*;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RestController
 @RequestMapping("/download")
@@ -29,9 +38,11 @@ public class FileDownloadController {
 
     private final MinioClient minioClient;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
+    private final WebClient webClient;
 
     private final static String ZIP_TASK_ID_PREFIX = "zip_task_id:";
     private final static String ZIP_TASK_FILES_PREFIX = "zip_task_files:";
+    private final static Long ZIP_DOWNLOAD_LIMIT = 256 * 1024 * 1024L;
 
     // 创建一个固定大小的线程池，数量为可用处理器数量的 4 倍， 适用于 I/O 密集型任务
     private final ExecutorService executorService = new ThreadPoolExecutor(
@@ -44,9 +55,12 @@ public class FileDownloadController {
     );
 
     @Autowired
-    public FileDownloadController(MinioClient minioClient, ReactiveRedisTemplate<String, String> redisTemplate) {
+    public FileDownloadController(MinioClient minioClient,
+                                  ReactiveRedisTemplate<String, String> redisTemplate,
+                                  WebClient webClient) {
         this.minioClient = minioClient;
         this.redisTemplate = redisTemplate;
+        this.webClient = webClient;
     }
 
     /**
@@ -78,12 +92,18 @@ public class FileDownloadController {
 
                 logger.info("下载单文件 {}{} 成功", bucket, object);
 
-                Resource resource = new InputStreamResource(getObjectResponse);
+                Resource resource = new InputStreamResource(getObjectResponse); // 文件资源
+                String objectName = statObjectResponse.object(); // minio 对象名称
+                String fileName = objectName.contains("/") ? objectName.substring(objectName.lastIndexOf("/")) : objectName; // 文件名称
+
+                // 构造请求头
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.parseMediaType(statObjectResponse.contentType()));
+                headers.setContentLength(statObjectResponse.size());
+                headers.setContentDispositionFormData("attachment", fileName);
 
                 return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType(statObjectResponse.contentType()))
-                        .contentLength(statObjectResponse.size())
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + URLEncoder.encode(statObjectResponse.object(), StandardCharsets.UTF_8))
+                        .headers(headers)
                         .body(resource);
 
             } catch (Exception e) {
@@ -158,50 +178,151 @@ public class FileDownloadController {
 
     /**
      * 初始化zip下载
-     * JSON 格式:
-     * - bucket 存储桶名称
-     * - objects 文件名称列表, 即文件在 Minio 中的绝对路径
+     * @apiNote 初始化中会向 file-system 服务获取文件列表中所有文件的总字节大小，如果总大小超过 256 MB，则不允许下载以避免对服务器造成过大的负荷
      * @return 返回zip任务id
      */
     @PostMapping("/init_zip_download")
-    public Mono<ResponseEntity<?>> initZipDownload(@Validated @RequestBody InitZipDownloadRequest request) {
-        return Mono.fromFuture(() -> CompletableFuture.supplyAsync(
-                () -> {
-                    // 生成zip任务id
-                    String zipTaskId = UUID.randomUUID().toString();
-                    String zipTaskIdKey = ZIP_TASK_ID_PREFIX + zipTaskId;
-                    String zipTaskFilesKey = ZIP_TASK_FILES_PREFIX + zipTaskId;
+    public Mono<ResponseEntity<?>> initZipDownload(@RequestBody @Validated InitZipDownloadRequest request) {
+        List<String> files = request.getFiles();
+        List<String> fileIds = request.getFileIds();
 
-                    // Redis 中完成以下映射
-                    // zipTaskId -> bucket
-                    // zipTaskId -> list[file names]
-                    return redisTemplate.opsForValue().set(zipTaskIdKey, request.getBucket(), Duration.ofHours(24))
-                            .flatMap(v -> {
-                                if (Boolean.TRUE.equals(v)) {
-                                    // 将文件列表存储到Redis的List中
-                                    return redisTemplate.opsForList().leftPushAll(zipTaskFilesKey, request.getObjects())
-                                            .flatMap(result -> {
-                                                    // 设置24小时过期时间
-                                                    return redisTemplate.expire(zipTaskFilesKey, Duration.ofHours(24)).thenReturn(zipTaskId);
-                                                }
-                                            )
-                                            .onErrorResume(e -> Mono.error(new RuntimeException("Failed to store zip task id in Redis")));
-                                } else {
-                                    return Mono.error(new RuntimeException("Failed to store zip task id in Redis")); // 如果存储失败，抛出异常
-                                }
-                            })
-                            .onErrorResume(e -> {
-                                return Mono.error(new RuntimeException("Error occurred when storing zip task id in Redis", e)); // 返回错误响应
-                            })
-                            .toFuture(); // 将Mono转换为Future
-                },
-                executorService
-            )
-        ).flatMap(zipTaskId -> Mono.just(ResponseEntity.ok(zipTaskId)));
+        // 检查文件路径列表和文件ID列表的长度是否相同
+        if(files.size() != fileIds.size()) {
+            return Mono.just(ResponseEntity.badRequest().body("文件列表和文件ID列表的长度不匹配"));
+        }
+
+        // 检查打包的文件总大小是否超过 256 MB
+        Mono<ApiResponse> response = webClient.post()
+                .uri("http://localhost:8104/get_files_size")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new GetFilesSizeRequest(fileIds))
+                .retrieve()
+                .bodyToMono(ApiResponse.class);
+
+        return response.flatMap(
+                apiResponse -> {
+                    if(apiResponse.getCode() != 200) {
+                        return Mono.just(ResponseEntity.status(500).body("请求远程文件系统服务失败"));
+                    }
+
+                    Long size = Long.parseLong((String) apiResponse.getData());
+                    if(size > ZIP_DOWNLOAD_LIMIT) {
+                        return Mono.just(ResponseEntity.badRequest().body("zip打包的文件总大小不允许超过" + ZIP_DOWNLOAD_LIMIT / 1024 / 1024 + " MB"));
+                    } else {
+                        return Mono.fromFuture(() -> CompletableFuture.supplyAsync(
+                                        () -> {
+                                            // 生成zip任务id
+                                            String zipTaskId = UUID.randomUUID().toString();
+                                            String zipTaskIdKey = ZIP_TASK_ID_PREFIX + zipTaskId;
+                                            String zipTaskFilesKey = ZIP_TASK_FILES_PREFIX + zipTaskId;
+
+                                            // Redis 中完成以下映射
+                                            // zipTaskId -> bucket
+                                            // zipTaskFiles -> list[absolute filePath]
+                                            return redisTemplate.opsForValue().set(zipTaskIdKey, request.getBucket(), Duration.ofHours(24))
+                                                    .flatMap(v -> {
+                                                        if (Boolean.TRUE.equals(v)) {
+                                                            // 将文件列表存储到Redis的List中
+                                                            return redisTemplate.opsForList().leftPushAll(zipTaskFilesKey, files)
+                                                                    .flatMap(result -> {
+                                                                                logger.info("创建zip下载任务：{}, 文件总大小：{} bytes", zipTaskId, size);
+
+                                                                                // 设置24小时过期时间
+                                                                                return redisTemplate.expire(zipTaskFilesKey, Duration.ofHours(24)).thenReturn(zipTaskId);
+                                                                            }
+                                                                    )
+                                                                    .onErrorResume(e -> Mono.error(new RuntimeException("将zip下载任务的文件列表存储到redis失败")));
+                                                        } else {
+                                                            return Mono.error(new RuntimeException("存储zip下载的任务ID到redis失败")); // 如果存储失败，抛出异常
+                                                        }
+                                                    })
+                                                    .toFuture(); // 将Mono转换为Future
+                                        },
+                                        executorService
+                                )
+                        ).flatMap(zipTaskId -> Mono.just(ResponseEntity.ok(zipTaskId)));
+                    }
+                }
+        );
     }
 
+    /**
+     * 将多个文件打包成zip下载
+     * @return zip字节流
+     */
     @PostMapping("/zip_download")
-    public Mono<ResponseEntity<?>> downloadFilesAsZip(@RequestParam("zipTaskId") String zipTaskId) {
-        return Mono.just(ResponseEntity.ok("OK"));
+    public Mono<ResponseEntity<byte[]>> downloadFilesAsZip(@RequestBody @Validated ZipDownloadRequest request) {
+        String zipTaskId = request.getZipTaskId();
+        String target = request.getTarget();
+        String zipTaskIdKey = ZIP_TASK_ID_PREFIX + zipTaskId;
+        String zipTaskFilesKey = ZIP_TASK_FILES_PREFIX + zipTaskId;
+
+        return Mono.zip(
+                redisTemplate.opsForValue().get(zipTaskIdKey), // 获取存储桶
+                redisTemplate.opsForList().range(zipTaskFilesKey, 0, -1).collectList() // 获取整个文件列表
+        ).flatMap(
+                tuple -> {
+                    String bucket = tuple.getT1();
+                    List<String> files = tuple.getT2();
+
+                    return Mono.fromCallable(() -> {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+                        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+                            for (String file : files) {
+                                // 构建 minio 的获取对象的参数
+                                GetObjectArgs getObjectArgs = GetObjectArgs.builder()
+                                        .bucket(bucket)
+                                        .object(file)
+                                        .build();
+
+                                // 文件名称，用作 zip 压缩包中的文件名称
+                                String fileName = file.contains("/") ? file.substring(file.lastIndexOf("/") + 1) : file;
+
+                                try (InputStream is = minioClient.getObject(getObjectArgs)) {
+                                    ZipEntry zipEntry = new ZipEntry(fileName);
+                                    zos.putNextEntry(zipEntry);
+                                    byte[] buffer = new byte[1024];
+                                    int len;
+                                    while ((len = is.read(buffer)) != -1) {
+                                        zos.write(buffer, 0, len);
+                                    }
+                                    zos.closeEntry();
+                                } catch(MinioException minioException) {
+                                    throw new RuntimeException("下载文件 " + fileName + "遇到错误");
+                                } catch(IOException ioException) {
+                                    throw new RuntimeException("将文件 " + fileName + "写入 zip 流时遇到错误");
+                                }
+                            }
+                            zos.finish(); // 完成 ZIP 文件的写入
+                        } catch (Exception e) {
+                            logger.error("zip 下载任务 {} 失败：{}", zipTaskId, e.getMessage());
+                            throw e;
+                        }
+
+                        // 清理 redis 中zip下载任务的数据
+                        redisTemplate.expire(zipTaskIdKey, Duration.ofSeconds(0)).subscribe();
+                        redisTemplate.expire(zipTaskFilesKey, Duration.ofSeconds(0)).subscribe();
+
+                        return baos.toByteArray(); // 返回zip字节数组
+                    }).subscribeOn(Schedulers.fromExecutorService(executorService)); // 将zip任务提交到线程池执行
+                }
+        ).map(
+                zipData -> {
+                    logger.info("zip 下载任务 {} 完成", zipTaskId);
+
+                    HttpHeaders headers = new HttpHeaders();
+
+                    // 确保下载的文件名称以 .zip 结尾
+                    if(target.endsWith(".zip")) {
+                        headers.setContentDispositionFormData("attachment", target);
+                    } else {
+                        headers.setContentDispositionFormData("attachment", target + ".zip");
+                    }
+
+                    headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                    return ResponseEntity.ok().headers(headers).body(zipData);
+                }
+        );
     }
 }

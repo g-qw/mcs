@@ -17,6 +17,7 @@
         <module>upload-service</module>
         <module>download-service</module>
         <module>file-system</module>
+        <module>file-system-v2</module>
     </modules>
 
     <groupId>org.cloud</groupId>
@@ -49,30 +50,11 @@
     </properties>
 
     <dependencies>
-        <!-- Spring WebFlux -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-
         <!-- Spring Boot Test 依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <!-- Reactor 测试工具 -->
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- 响应式的Redis -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
         </dependency>
 
         <!-- 数据验证库 -->
@@ -92,22 +74,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
-        </dependency>
-
-        <!-- 提供了 JSON 解析和生成的基本功能 -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-        </dependency>
-        <!-- 提供了 Java 对象与 JSON 数据之间的序列化和反序列化功能 -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <!-- Jackson 数据绑定库的一个扩展模块，用于支持 Java 8 的时间日期类型（如 LocalDateTime、LocalDate、ZonedDateTime 等）。 -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
         <!-- nacos 服务管理 -->

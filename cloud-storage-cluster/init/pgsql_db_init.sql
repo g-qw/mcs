@@ -35,6 +35,7 @@ CREATE TABLE directories (
      name VARCHAR(255) NOT NULL,  -- 文件夹名称，最大 255 个字符，非空
      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- 创建时间，默认为当前时间
      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- 更新时间，默认为当前时间
+     size BIGINT DEFAULT 0, -- 目录大小
      UNIQUE (user_id, parent_directory_id, name)  -- 同一个目录下不能有相同名称的子目录
 );
 
@@ -72,5 +73,3 @@ CREATE INDEX idx_userId ON files(file_id, user_id);
 
 -- 索引文件（目录ID），用于查询某一目录下的所有子文件
 CREATE INDEX idx_directory_id ON files(directory_id);
-
-

@@ -51,7 +51,7 @@
                     <div class="created-at">{{ folder.createdAt}}</div>
                     <div class="updated-at">{{ folder.updatedAt }}</div>
                     <div class="type">文件夹</div>
-                    <div class="size"></div>
+                    <div class="size">{{ formatBytes(folder.size) }}</div>
                     <div class="buttons">
                         <svg-icon class="download-icon" icon-class="download" color="#8d96a0" size="1.5em" @click="" />
                         <svg-icon class="delete-icon" icon-class="delete" color="#8d96a0" size="1.25em" @click="deleteDirectory(index)" />
@@ -1351,7 +1351,7 @@ input:-moz-autofill:active {
 }
 
 .property .create-date{
-    left: 41vw;
+    left: 42vw;
 }
 
 .property .modify-date {
@@ -1359,11 +1359,11 @@ input:-moz-autofill:active {
 }
 
 .property .type {
-    left: 65.5vw;
+    left: 64.5vw;
 }
 
 .property .size {
-    left: 73.7vw;
+    left: 73vw;
 }
 
 .fs-content {
@@ -1464,7 +1464,7 @@ input:-moz-autofill:active {
     background-color: transparent;
     text-align: left;
     font-size: 0.95em;
-    width: 20em;
+    width: 25em;
     border: none;
     outline: none;
     padding: 1vh 0.75em;
@@ -1500,13 +1500,13 @@ input:-moz-autofill:active {
 .fs-folder .created-at, .fs-folder .updated-at,
 .fs-file .created-at, .fs-file .updated-at,
 .fs-folder .type,.fs-file .type {
-    width: 12vw;
+    width: 11vw;
     font-size: 0.9em;
 }
 
 .fs-folder .size,
 .fs-file .size {
-    width: 4vw;
+    width: 6vw;
     padding: 1vh 0;
     font-size: 0.8em;
 }

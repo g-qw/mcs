@@ -253,4 +253,14 @@ public class FileService {
             }
         );
     }
+
+    /**
+     * 查询指定文件ID列表对应的文件列表的总文件大小
+     * @return 总文件大小，单位字节(byte)
+     */
+    public Mono<String> getFileListSize(List<String> fileIds) {
+        return Mono.fromCallable(
+                () -> fileMapper.getTotalSizeByFileIds(fileIds).toString()
+        ).subscribeOn(Schedulers.fromExecutor(executor));
+    }
 }

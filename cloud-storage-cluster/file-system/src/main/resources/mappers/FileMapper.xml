@@ -89,16 +89,26 @@
     </select>
 
     <!-- 根据文件ID查询文件名称 -->
-    <select id="getNameByFileId" resultType="java.lang.String">
+    <select id="getNameByFileId" parameterType="java.util.UUID" resultType="java.lang.String">
         SELECT object_name
         FROM files
         WHERE file_id = #{fileId}
     </select>
 
     <!-- 计算用户所使用的存储空间 -->
-    <select id="computeUsedStorage" resultType="java.lang.Long">
+    <select id="computeUsedStorage" parameterType="java.util.UUID" resultType="java.lang.Long">
         SELECT SUM(size)
         FROM files
         WHERE user_id = #{userId}
+    </select>
+
+    <!-- 计算指定文件ID列表对应的所有文件的总字节数 -->
+    <select id="getTotalSizeByFileIds" parameterType="java.util.List" resultType="java.lang.Long">
+        SELECT SUM(COALESCE(size, 0)) AS total_size
+        FROM files
+        WHERE file_id IN
+        <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
+            #{fileId}::uuid
+        </foreach>
     </select>
 </mapper>

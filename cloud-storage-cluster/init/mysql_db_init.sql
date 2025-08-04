@@ -21,20 +21,21 @@ CREATE INDEX idx_users_email ON users(email);
 -- 文件系统 --
 CREATE TABLE directories (
      directory_id CHAR(36) PRIMARY KEY DEFAULT UUID(), -- MySQL不支持函数作为默认值，需通过触发器或应用层生成
-     parent_directory_id CHAR(36), -- 外键关联需要手动处理
-     user_id CHAR(36), -- 外键关联需要手动处理
+     parent_directory_id CHAR(36), -- 父目录ID，关联 directories 表
+     user_id CHAR(36), -- 用户ID，关联 users 表
      name VARCHAR(255) NOT NULL,
      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     size BIGINT DEFAULT 0,
      UNIQUE (user_id, parent_directory_id, name),
      FOREIGN KEY (user_id) REFERENCES users(user_id), -- 添加外键约束，关联到 users 表的 user_id 字段
      FOREIGN KEY (parent_directory_id) REFERENCES directories(directory_id) -- 添加外键约束，关联到 directories 表的 directory_id 字段
 );
 
 CREATE TABLE files (
-    file_id CHAR(36) PRIMARY KEY DEFAULT UUID(), -- 同上
-    directory_id CHAR(36), -- 外键关联需要手动处理
-    user_id CHAR(36), -- 外键关联需要手动处理
+    file_id CHAR(36) PRIMARY KEY DEFAULT UUID(), -- 文件ID
+    directory_id CHAR(36), -- 目录ID，关联 directories 表
+    user_id CHAR(36), -- 用户ID，关联 users 表
     object_name VARCHAR(255) NOT NULL,
     mime_type VARCHAR(128) NOT NULL,
     size BIGINT,

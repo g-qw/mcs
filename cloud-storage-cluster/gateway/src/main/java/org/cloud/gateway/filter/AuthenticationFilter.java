@@ -24,6 +24,8 @@ import java.util.Map;
 @Component
 public class AuthenticationFilter implements GatewayFilter {
     private final static Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+    private final static String AUTHORIZATION_TOKEN_PREFIX = "authorization:";
+
     private final ReactiveRedisTemplate<String, String> redisTemplate;
 
     public AuthenticationFilter(ReactiveRedisTemplate<String, String> redisTemplate) {
@@ -59,7 +61,8 @@ public class AuthenticationFilter implements GatewayFilter {
             String token = authorization.substring(7);
 
             // 验证 token 是否有效
-            return redisTemplate.hasKey(token).flatMap(
+            String key = AUTHORIZATION_TOKEN_PREFIX + token;
+            return redisTemplate.hasKey(key).flatMap(
                     exists -> {
                         if (Boolean.TRUE.equals(exists)) {
                             return chain.filter(exchange);  // 身份有效
