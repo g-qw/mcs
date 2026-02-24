@@ -1,62 +1,177 @@
-### 创建根目录
-POST http://{{fs.base_url}}/root_dir?userId={{user_meta.userId}}
 
-### 获取根目录数据
-GET http://{{fs.base_url}}/get_root_dir?userId={{user_meta.userId}}
+### 查询根目录
+GET http://{{fs.base_url}}/dir
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
 
-### 创建目录
-POST http://{{fs.base_url}}/create_dir?userId={{user_meta.userId}}
+### 获取目录信息
+GET http://{{fs.base_url}}/dir/{{user_meta.root_dir}}
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+
+### 加载目录树数据
+GET http://{{fs.base_url}}/dir/{{user_meta.root_dir}}/node
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+
+### 获取目录内容
+GET http://{{fs.base_url}}/dir/{{user_meta.root_dir}}/content
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+### 获取目录层级路径
+POST http://{{fs.base_url}}/dir/path
 Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
 
 {
-  "parentDirectoryId": "{{user_meta.root_dir}}",
-  "userId": "{{user_meta.userId}}",
-  "name": "dir_4"
+  "path": "/dir1/dir2/dir3/dir4"
 }
 
-### 获取目录名称
-GET http://{{fs.base_url}}/get_dir_name?directoryId={{user_meta.root_dir}}
 
-### 更新目录名称
-POST http://{{fs.base_url}}/update_dir_name?directoryId=e205b2c0-915e-46f8-a4a8-e95e55de5d9e&name=dir_1
+### 创建目录
+POST http://{{fs.base_url}}/dir/create
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
 
-### 删除目录
-POST http://{{fs.base_url}}/delete_dir?directoryId=6a3e7248-b6b7-4633-9d4e-fe3ecb9f4217
+{
+  "parentId": "a70615db-8d27-451a-8e28-17d326ffcf72",
+  "name": "dir5"
+}
 
-### 加载目录
-POST http://{{fs.base_url}}/load_dir?directoryId={{user_meta.root_dir}}
 
-### 移动目录
-POST http://{{fs.base_url}}/move_dir?directoryId=adaf6cfc-bbb4-4f51-b51f-9f26ea07c5ce&parentDirectoryId=42b6b7b4-9b13-4b62-8427-850a94d84789
+### 重命名目录
+POST http://{{fs.base_url}}/dir/rename
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+{
+  "id": "000a9a46-acc1-4701-a7fb-ee4371d44305",
+  "name": "Document"
+}
+
+### 批量删除目录
+POST http://{{fs.base_url}}/dir/delete
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+{
+  "directoryIds": [
+    "ccce3fe1-9265-446e-8937-ae6f68eafb0e"
+  ]
+}
+
+### 批量恢复目录
+POST http://{{fs.base_url}}/dir/recover
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+{
+  "directoryIds": [
+    "ccce3fe1-9265-446e-8937-ae6f68eafb0e"
+  ]
+}
+
+### 批量移动目录
+POST http://{{fs.base_url}}/dir/move
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+{
+  "directoryIds": [
+    "839dfb03-1446-47eb-9062-3522a556596f"
+  ],
+  "parentId": "1a9db51f-7711-49e7-9a99-f1d9bb0f0904"
+}
+
+
+### 获取文件
+GET http://{{fs.base_url}}/file/9e1a60e0-89b5-4c16-bc36-728fb97ff04e
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
 
 ### 创建文件
-POST http://{{fs.base_url}}/add_file
+POST http://{{fs.base_url}}/file/create
 Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
 
 {
   "directoryId": "{{user_meta.root_dir}}",
-  "userId": "{{user_meta.userId}}",
-  "objectName": "/1024.dat",
-  "mimeType": "application/octet-stream",
-  "size": 1024
+  "storageKey": "storageKey",
+  "name": "1024.txt",
+  "mimeType": "text",
+  "size": 1024,
+  "md5": "xxx"
 }
 
-### 删除文件
-POST http://{{fs.base_url}}/delete_file?fileId=665b4ad9-846d-4c59-8d75-66c9fbb3fe34
-
-### 移动文件
-POST http://{{fs.base_url}}/move_file?fileId=665b4ad9-846d-4c59-8d75-66c9fbb3fe34&directoryId={{user_meta.root_dir}}
-
-### 查询文件列表的总字节大小
-POST http://{{fs.base_url}}/get_files_size
+### 重命名文件
+POST http://{{fs.base_url}}/file/rename
 Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
 
 {
-    "fileIds":[
-          "63e4b619-6e89-48f7-9685-cb9b9855c63c",
-          "8ec5a4c4-d755-418f-abb7-5657e3ca3f58",
-          "eaa8e363-c05d-4dec-931e-47047a8ff8a0",
-          "62f6a726-c404-40b5-abb2-7949dfc3b35a",
-          "1278ca26-c0d1-4b9e-b0ba-aad78f35f6b0"
-    ]
+  "id": "9e1a60e0-89b5-4c16-bc36-728fb97ff04e",
+  "name": "test.txt"
+}
+
+### 批量删除文件
+POST http://{{fs.base_url}}/file/delete
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+{
+  "fileIds": [
+    "9e1a60e0-89b5-4c16-bc36-728fb97ff04e"
+  ]
+}
+
+### 批量恢复文件
+POST http://{{fs.base_url}}/file/recover
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+{
+  "fileIds": [
+    "9e1a60e0-89b5-4c16-bc36-728fb97ff04e"
+  ],
+  "targetDirectoryId": "5ea9f27e-d1ad-4bbf-aa20-f2cf164f0a5f"
+}
+
+
+### 批量复制文件
+POST http://{{fs.base_url}}/file/copy
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+{
+  "fileIds": [
+    "9e1a60e0-89b5-4c16-bc36-728fb97ff04e"
+  ],
+  "targetDirectoryId": "5ea9f27e-d1ad-4bbf-aa20-f2cf164f0a5f"
+}
+
+### 批量移动文件
+POST http://{{fs.base_url}}/file/move
+Content-Type: application/json
+Authorization: Bearer {{user_meta.token}}
+UID: {{user_meta.id}}
+
+{
+  "fileIds": [
+    "9e1a60e0-89b5-4c16-bc36-728fb97ff04e"
+  ],
+  "targetDirectoryId": "000a9a46-acc1-4701-a7fb-ee4371d44305"
 }

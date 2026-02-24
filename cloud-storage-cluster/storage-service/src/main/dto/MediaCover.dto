@@ -1,0 +1,12 @@
+export org.cloud.storage.entity.MediaCover
+    -> package org.cloud.storage.dto
+
+input MediaCoverInput {
+    fileId
+    userId
+    bucket
+    storageKey
+    size
+    width
+    height
+}

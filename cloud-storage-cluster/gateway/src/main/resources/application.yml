@@ -1,92 +1,42 @@
 server:
-  port: 75 # 网关端口
+  port: 75
 
 spring:
   main:
-    web-application-type: reactive # 响应式编程模型
+    web-application-type: reactive
   application:
     name: gateway
   thymeleaf:
-    cache: true # 缓存 index.html
-  # redis 配置
+    cache: true
   data:
     redis:
-      host: localhost
+      host: 127.0.0.1
       port: 6379
-      # password 在程序实参中添加redis的密码
+      password: ${REDIS_PWD:'}r7)OU1Ry5AN6odl9L?wav&D*lx=zoZ%'}
       database: 1
-      lettuce:
-        pool:
-          max-idle: 128 # 最大空闲连接数
-          max-active: 256 # 最大活跃连接数
-          min-idle: 64 # 最小空闲连接数
-          max-wait: 100ms # 最大等待时间
-
   cloud:
-    nacos: # 使用nacos作为注册中心
+    nacos:
       discovery:
         server-addr: 127.0.0.1:8848
     gateway:
-      server:
-        webflux:
-          routes:
-            # 此配置用于将 Path 的第一部分去除
-            # 如果请求路径是 /users/xxx，经过 StripPrefix 过滤器后，路径会变成 /xxx。
-            # 即微服务中接收到的请求为 /xxx
-            # filters:
-            #   - name: StripPrefix
-            #     args:
-            #       parts: 1
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/user/**
 
-            # 用户服务
-            - id: user-service
-              uri: lb://user-service # http://localhost:8100
-              predicates:
-                - Path=/users/**
-              filters:
-                - name: StripPrefix
-                  args:
-                    parts: 1
+        - id: file-system
+          uri: lb://file-system
+          predicates:
+            - Path=/api/v1/fs/**
 
-            # 邮件服务
-            - id: mail-service
-              uri: lb://mail-service # http://localhost:8101
-              predicates:
-                - Path=/mail/**
-              filters:
-                - name: StripPrefix
-                  args:
-                    parts: 1
+        - id: storage-service
+          uri: lb://storage-service
+          predicates:
+            - Path=/api/v1/storage/**
 
-            # 文件上传服务
-            - id: upload-service
-              uri: lb://upload-service # http://localhost:8102
-              predicates:
-                - Path=/fu/**
-              filters:
-                - name: StripPrefix
-                  args:
-                    parts: 1
-
-            # 文件下载服务
-            - id: download-service
-              uri: lb://download-service # http://localhost:8103
-              predicates:
-                - Path=/fd/**
-              filters:
-                - name: StripPrefix
-                  args:
-                    parts: 1
-
-            # 文件系统服务
-            - id: file-system
-              uri: lb://file-system # http://localhost:8104
-              predicates:
-                - Path=/fs/**
-              filters:
-                - name: StripPrefix
-                  args:
-                    parts: 1
+jwt:
+  secret: ${JWT_SECRET:}
 
 logging:
   level:

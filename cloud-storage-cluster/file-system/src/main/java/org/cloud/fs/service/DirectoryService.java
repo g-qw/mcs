@@ -1,266 +1,74 @@
 package org.cloud.fs.service;
+import org.babyfish.jimmer.Page;
+import org.cloud.fs.dto.DirectoryInput;
+import org.cloud.fs.dto.DirectoryNode;
+import org.cloud.fs.dto.DirectorySpecification;
+import org.cloud.fs.dto.DirectoryView;
+import org.cloud.fs.entity.Directory;
+import org.springframework.data.domain.PageRequest;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import org.cloud.fs.exception.RootDirectoryMoveException;
-import org.cloud.fs.model.MinioDirectory;
-import org.cloud.fs.exception.DirectoryAlreadyExistsException;
-import org.cloud.fs.exception.DirectoryNotEmptyException;
-import org.cloud.fs.exception.DirectoryNotFoundException;
-import org.cloud.fs.mappers.DirectoryMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-
-import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.*;
 
-@Service
-@Transactional(rollbackFor = Exception.class)
-public class DirectoryService {
-    private final static Logger logger = LoggerFactory.getLogger(DirectoryService.class);
-    private static final String ROOT_DIRECTORY_CACHE_PREFIX = "root_directory_cache:";
-    private static final String DIRECTORY_PATH_CACHE_PREFIX = "directory_path_cache:";
-
-    private final DirectoryMapper directoryMapper;
-    private final MinioClient minioClient;
-    private final ReactiveRedisTemplate<String, String> redisTemplate;
-    private final Executor executor;
-
-    @Autowired
-    public DirectoryService(DirectoryMapper directoryMapper,
-                            MinioClient minioClient,
-                            ReactiveRedisTemplate<String, String> redisTemplate,
-                            @Qualifier("sharedExecutor") Executor executor) {
-        this.directoryMapper = directoryMapper;
-        this.minioClient = minioClient;
-        this.redisTemplate = redisTemplate;
-        this.executor = executor;
-    }
-
+public interface DirectoryService {
     /**
-     * 创建用户的根目录，根目录的父目录ID为NULL
-     * @param userId 用户ID
-     * @return 根目录ID，如果已存在则返回已有的根目录ID，否则创建根目录并返回
+     * 创建根目录
      */
-    public Mono<String> createRootDirectory(String userId) {
-        // 将多个阻塞操作包装成 Mono 冷流，只在订阅时执行
-        return Mono.fromCallable(
-                () -> {
-                    UUID uuidUserId = UUID.fromString(userId);
-
-                    // 检查根目录是否已经创建
-                    String rootId = directoryMapper.getRootDirectoryId(uuidUserId);
-                    if(rootId != null) {
-                        return rootId; // 已有直接返回
-                    }
-
-                    // 不存在根目录，创建根目录
-                    UUID directoryId = UUID.randomUUID();
-                    directoryMapper.createDirectory(directoryId,null, uuidUserId, "/");
-
-                    // 创建以用户ID为名称的 bucket
-                    // 检查 bucket 是否存在
-                    boolean isBucketExist = minioClient.bucketExists(
-                            BucketExistsArgs.builder()
-                                    .bucket(userId)
-                                    .build()
-                    );
-
-                    // 如果 bucket 不存在则创建 bucket
-                    if(!isBucketExist) {
-                        minioClient.makeBucket(
-                                MakeBucketArgs.builder()
-                                        .bucket(userId)
-                                        .build()
-                        );
-                    }
-
-                    logger.info("用户 {} 初始化文件系统的根目录 {} 成功.", userId, directoryId);
-
-                    return directoryId.toString();
-                }
-        ).subscribeOn(Schedulers.fromExecutor(executor));
-    }
+    Directory createRootDirectory(UUID userId);
 
     /**
      * 获取用户的根目录
-     * @param userId 用户ID
-     * @return 目录对象
      */
-    public Mono<MinioDirectory> getRootDirectory(UUID userId) {
-        // 查询 Redis 中是否有缓存的 directoryId
-        String rootDirKey = ROOT_DIRECTORY_CACHE_PREFIX + userId;
-        return redisTemplate.opsForValue().get(rootDirKey) // 先读取缓存
-            .filter(dirId -> dirId != null && !dirId.isEmpty())
-            .switchIfEmpty( // 缓存未命中，查询数据库
-                Mono.defer(
-                        () -> Mono.fromCallable(
-                                () -> {
-                                    String dirId = directoryMapper.getRootDirectoryId(userId);
-                                    if (dirId == null || dirId.isEmpty()) {
-                                        logger.error("用户 {} 的根目录异常，未查询到有效的根目录ID", userId);
-                                        throw new IllegalArgumentException("未查询到根目录 ID");
-                                    }
-                                    return dirId;
-                                }
-                        ).flatMap(
-                                dirId -> redisTemplate.opsForValue().set(rootDirKey, dirId, Duration.ofMinutes(60))
-                                        .thenReturn(dirId)
-                        )
-                ).subscribeOn(Schedulers.fromExecutor(executor))
-            ).flatMap(dirId -> // 根据目录 id 再查询一次数据库拿完整对象
-                 Mono.fromCallable(
-                    () ->  directoryMapper.getDirectoryById(UUID.fromString(dirId))
-                 ).subscribeOn(Schedulers.fromExecutor(executor))
-            );
-    }
+    Optional<Directory> getRootDirectory(UUID userId);
 
     /**
-     * 创建目录
-     *
-     * @param directory 目录对象
-     * @return 目录对象
-     * @throws DirectoryNotFoundException      父目录不存在
-     * @throws DirectoryAlreadyExistsException 目录已存在
+     * 查询指定目录详情（不包含子节点）
      */
-    public Mono<MinioDirectory> createDirectory(MinioDirectory directory) throws DirectoryAlreadyExistsException{
-        return Mono.fromCallable(
-                () -> {
-                    UUID parentId = UUID.fromString(directory.getParentDirectoryId());
-                    UUID userId   = UUID.fromString(directory.getUserId());
-                    String name   = directory.getName();
-
-                    String existingId = directoryMapper.getDirectoryId(parentId, name);
-                    if (existingId != null) {
-                        throw new DirectoryAlreadyExistsException(name);
-                    }
-
-                    UUID directoryId = UUID.randomUUID();
-                    directoryMapper.createDirectory(directoryId, parentId, userId, name);
-                    return directoryMapper.getDirectory(directoryId);
-                }
-        ).subscribeOn(Schedulers.fromExecutor(executor));
-    }
+    Optional<Directory> getDirectoryById(UUID directoryId, UUID userId);
 
     /**
-     * 根据目录ID查询目录名称
-     * @param directoryId 目录ID
-     * @return 文件名称
+     * 查询目录内容
      */
-    public Mono<String> getDirectoryName(UUID directoryId) {
-        return Mono.fromCallable(
-                () -> directoryMapper.getDirectoryName(directoryId)
-        ).subscribeOn(Schedulers.fromExecutor(executor));
-    }
+    Optional<DirectoryView> listDirectoryContent(UUID directoryId, UUID userId);
 
     /**
-     * 更新目录名称
-     * @param directoryId 目录ID
-     * @param name 目录名称
+     * 创建新目录
      */
-    public Mono<Integer> updateDirectoryName(UUID directoryId, String name) {
-        return Mono.fromCallable(
-                () -> directoryMapper.updateDirectoryName(directoryId, name)
-        ).subscribeOn(Schedulers.fromExecutor(executor));
-    }
+    Directory createDirectory(DirectoryInput input, UUID userId);
 
     /**
-     * 删除目录
-     * @param directoryId 目录ID
-     * @throws DirectoryNotEmptyException 目录不为空
+     * 重命名目录
      */
-    public Mono<Integer> deleteDirectory(UUID directoryId) {
-        return Mono.fromCallable(
-                () -> {
-                    Boolean isEmpty = directoryMapper.isDirectoryEmpty(directoryId);
-                    if(isEmpty) {
-                        return directoryMapper.deleteDirectory(directoryId);
-                    } else {
-                        throw new DirectoryNotEmptyException(directoryId.toString());
-                    }
-                }
-        ).subscribeOn(Schedulers.fromExecutor(executor));
-    }
+    boolean renameDirectory(UUID directoryId, String newName, UUID userId);
 
     /**
-     * 根据父目录ID查询子目录
-     * @param parentDirectoryId 父目录ID
-     * @return 子目录列表
-     * @throws DirectoryNotFoundException 目录不存在
+     * 批量删除目录(软删除)
      */
-    public Mono<List<MinioDirectory>> getChildDirectories(UUID parentDirectoryId){
-        return Mono.fromCallable(
-                () -> directoryMapper.getDirectoriesByParentDirectoryId(parentDirectoryId)
-        ).subscribeOn(Schedulers.fromExecutor(executor));
-    }
+    int deleteDirectories(List<UUID> directoryIds, UUID userId);
 
     /**
-     * 移动目录
-     * @param directoryId 目录ID
-     * @param parentDirectoryId 目录ID
-     * @throws DirectoryNotFoundException 目录不存在
-     * @throws DirectoryNotEmptyException 目录不为空
+     * 批量恢复目录
      */
-     public Mono<Integer> moveDirectory(UUID directoryId, UUID parentDirectoryId) throws DirectoryNotFoundException, DirectoryNotEmptyException{
-         String pathKey = DIRECTORY_PATH_CACHE_PREFIX + directoryId;
-
-         // 检查目录是否存在，目录存在返回true，否则false
-         Mono<Boolean> dirExist = Mono.fromCallable(
-                 () -> directoryMapper.isDirectoryExist(parentDirectoryId)
-         ).subscribeOn(Schedulers.fromExecutor(executor));
-
-         // 检查目录是否不是根目录，目录不是根目录返回 true，否则false
-         Mono<Boolean> isNotRootDir = Mono.fromCallable(
-                 () -> !directoryMapper.getDirectoryName(directoryId).equals("/")
-         ).subscribeOn(Schedulers.fromExecutor(executor));
-
-         // 检查目录是否为空，目录为空返回 true，否则false
-         Mono<Boolean> dirEmpty = Mono.fromCallable(
-                 () -> directoryMapper.isDirectoryEmpty(directoryId)
-         ).subscribeOn(Schedulers.fromExecutor(executor));
-
-         return dirExist.filter(Boolean::booleanValue) // 检查目录是否存在，过滤掉目录不存在的情况
-        .switchIfEmpty(Mono.error(new DirectoryNotFoundException(parentDirectoryId.toString()))) // 目录不存在
-        .then(isNotRootDir).filter(Boolean::booleanValue) // 检查移动的目录是否不是根目录，过滤掉目录为根目录的情况
-        .switchIfEmpty(Mono.error(new RootDirectoryMoveException(directoryId.toString()))) // 被移动的目录为根目录
-        .then(dirEmpty).filter(Boolean::booleanValue) // 检查目录是否为空，过滤掉目录不为空的情况
-        .switchIfEmpty(Mono.error(new DirectoryNotEmptyException(directoryId.toString()))) // 目录不为空
-        .then(Mono.fromCallable(() -> redisTemplate.delete(pathKey))) // 清除目录缓存
-        .then(Mono.fromCallable(() -> directoryMapper.moveDirectory(directoryId, parentDirectoryId))); // 移动目录
-     }
+    int recoverDirectories(List<UUID> directoryIds, UUID userId);
 
     /**
-     * 更新指定目录的存储大小
-     * @param directoryId 目录ID
-     * @return 更新后的目录大小
+     * 批量移动目录到新的父目录下
      */
-    public Mono<Long> updateDirectorySize(UUID directoryId) {
-        return Mono.fromCallable(
-                () -> {
-                    MinioDirectory directory = directoryMapper.getDirectory(directoryId);
-                    if(directory == null) {
-                        throw new DirectoryNotFoundException(directoryId.toString());
-                    }
+    int moveDirectories(List<UUID> directoryIds, UUID newParentId, UUID userId);
 
-                    Long oldSize = directoryMapper.getSizeByDirectoryId(directoryId);
-                    Long newSize = directoryMapper.getDirectorySize(directoryId);
+    /**
+     * 解析路径
+     */
+    List<Directory> parsePath(String path, UUID userId);
 
-                    if(oldSize.longValue() != newSize.longValue()) {
-                        directoryMapper.updateSize(directoryId, newSize);
-                    }
+    /**
+     * 获取目录树
+     */
+    DirectoryNode getDirectoryNode(UUID directoryId, UUID userId);
 
-                    return newSize;
-                }
-        ).subscribeOn(Schedulers.fromExecutor(executor));
-    }
+    /**
+     * 分页查询目录
+     */
+    Page<Directory> queryDirectories(PageRequest pageRequest, DirectorySpecification specification, UUID userId);
 }
