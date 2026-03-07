@@ -97,10 +97,12 @@ COMMENT ON TABLE  file IS '文件表';
 COMMENT ON COLUMN file.id      IS '文件 ID';
 COMMENT ON COLUMN file.directory_id IS '文件所在目录的 ID';
 COMMENT ON COLUMN file.user_id      IS '文件所属用户的ID';
+COMMENT ON COLUMN file.bucket       IS '存储该文件的 Minio 存储桶';
 COMMENT ON COLUMN file.storage_key  IS '文件在 Minio 的固定扁平存储键，在首次创建文件时按特定规则分配';
 COMMENT ON COLUMN file.name         IS '文件名称，包括文件扩展名';
 COMMENT ON COLUMN file.mime_type    IS '文件类型';
 COMMENT ON COLUMN file.size         IS '文件大小，单位: 字节';
+COMMENT ON COLUMN file.md5          IS '文件的MD5哈希值';
 COMMENT ON COLUMN file.deleted_at   IS '文件删除时间';
 COMMENT ON COLUMN file.created_at   IS '文件的创建时间';
 COMMENT ON COLUMN file.updated_at   IS '文件的修改时间';
@@ -131,6 +133,7 @@ CREATE TABLE file_processing_task (
 
 COMMENT ON TABLE   file_processing_task IS '媒体文件待处理队列，用于封面生成、转码等异步任务';
 COMMENT ON COLUMN   file_processing_task.file_id IS '待处理文件 ID';
+COMMENT ON COLUMN   file_processing_task.user_id IS '文件所属用户的ID';
 COMMENT ON COLUMN   file_processing_task.bucket IS '待处理文件所在的 MinIO bucket';
 COMMENT ON COLUMN   file_processing_task.storage_key IS '待处理文件在 MinIO 中的存储路径';
 COMMENT ON COLUMN   file_processing_task.task_type IS '任务类型';
@@ -158,7 +161,9 @@ CREATE TABLE media_cover (
         updated_at      BIGINT NOT NULL DEFAULT TRUNC(EXTRACT(EPOCH FROM NOW()) * 1000)
 );
 COMMENT ON TABLE media_cover IS '媒体文件缩略图/封面，用于图片预览和视频封面';
+COMMENT ON COLUMN media_cover.id IS '封面id';
 COMMENT ON COLUMN media_cover.file_id IS '关联的源文件 ID';
+COMMENT ON COLUMN media_cover.user_id IS '关联的源文件的所属用户的ID';
 COMMENT ON COLUMN media_cover.bucket IS '封面文件所在的 MinIO bucket';
 COMMENT ON COLUMN media_cover.storage_key IS '在 MinIO 中的存储路径';
 COMMENT ON COLUMN media_cover.size IS '文件大小(字节)';

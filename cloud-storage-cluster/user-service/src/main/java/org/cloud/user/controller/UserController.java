@@ -113,6 +113,7 @@ public class UserController {
     }
 
     @Operation(summary = "搜素用户")
+    @PostMapping("/search-user")
     public ApiResponse<UserSearchDTO> searchByName(@Parameter(description = "用户名称的关键词") @NotBlank @RequestParam("key") String key) {
         return ApiResponse.success(userService.searchUser(key));
     }

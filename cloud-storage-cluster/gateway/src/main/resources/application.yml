@@ -2,22 +2,15 @@ server:
   port: 75
 
 spring:
+  profiles:
+    default: dev
   main:
     web-application-type: reactive
   application:
     name: gateway
   thymeleaf:
     cache: true
-  data:
-    redis:
-      host: 127.0.0.1
-      port: 6379
-      password: ${REDIS_PWD:'}r7)OU1Ry5AN6odl9L?wav&D*lx=zoZ%'}
-      database: 1
   cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
     gateway:
       routes:
         - id: user-service
