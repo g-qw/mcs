@@ -24,9 +24,8 @@ WORKDIR /app
 COPY --from=builder /app/gateway/target/gateway-*.jar app.jar
 
 ENV TZ=Asia/Shanghai
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=50.0 \
-    -XX:InitialRAMPercentage=50.0 \
-    -XX:MaxMetaspaceSize=128m \
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=60.0 \
+    -XX:MaxMetaspaceSize=64m \
     -Xss256k"
 
 EXPOSE 75
