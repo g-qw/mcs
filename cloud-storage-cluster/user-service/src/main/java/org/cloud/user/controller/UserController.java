@@ -1,5 +1,6 @@
 package org.cloud.user.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -12,6 +13,7 @@ import org.cloud.user.entity.User;
 import org.cloud.user.service.EmailService;
 import org.cloud.user.service.UserService;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +26,13 @@ import java.util.UUID;
 public class UserController {
     private final UserService userService;
     private final EmailService emailService;
+
+    @GetMapping("/health")
+    @Operation(summary = "健康检查", description = "检查服务Controller层是否可用，返回UP表示正常")
+    @Hidden
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("UP");
+    }
 
     @PostMapping("/verify")
     @Operation(summary = "邮箱验证", description = "用于注册、登录、修改密码等等的邮箱验证")

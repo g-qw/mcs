@@ -21,8 +21,11 @@ COPY --from=builder /app/gateway/target/gateway-*.jar app.jar
 
 EXPOSE 75
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD sh -c 'echo > /dev/tcp/localhost/75' 2>/dev/null || exit 1
+HEALTHCHECK --interval=30s \
+            --timeout=5s \
+            --start-period=30s \
+            --retries=3 \
+            CMD sh -c 'echo > /dev/tcp/localhost/75' 2>/dev/null || exit 1
 
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \

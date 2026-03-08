@@ -58,7 +58,7 @@ public class OpenApiConfig {
                         .url("http://localhost:" + gatewayPort)
                         .description("测试环境"),
                 new Server()
-                        .url("https://api.example.com")
+                        .url("http://gateway:" + gatewayPort)
                         .description("生产环境")
         );
     }

@@ -6,37 +6,6 @@ spring:
     active: dev
   application:
     name: user-service
-  datasource:
-    url: jdbc:postgresql://localhost:5432/cloud_storage_cluster
-    username: postgres
-    password: ${DB_PWD:postgres}
-    driver-class-name: org.postgresql.Driver
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-  data:
-    redis:
-      host: 127.0.0.1
-      port: 6379
-      password: ${REDIS_PWD:'}r7)OU1Ry5AN6odl9L?wav&D*lx=zoZ%'}
-      database: 1
-  mail:
-    host: smtp.163.com
-    port: 587
-    username: passfort@163.com
-    password: ${MAIL_PWD:}
-    protocol: smtp
-    default-encoding: UTF-8
-    test-connection: true
-    properties:
-      mail:
-        smtp:
-          auth: true
-          ssl:
-            enable: true
-          starttls:
-            enable: false
 
 jimmer:
   dialect: org.babyfish.jimmer.sql.dialect.PostgresDialect
@@ -54,31 +23,11 @@ jimmer:
           description: 用户注册、登录，身份验证等等
           version: 1.0
 
-dubbo:
-  application:
-    name: ${spring.application.name}-dubbo
-    qos-enable: false
-  registry:
-    address: nacos://${spring.cloud.nacos.discovery.server-addr}?namespace=${spring.cloud.nacos.discovery.namespace}
-    register-mode: instance
-  consumer:
-    timeout: 3000
-    check: false
-  protocol:
-    name: dubbo
-    port: -1
-
 springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
     display-request-duration: true
-
-jwt:
-  secret: ${JWT_SECRET:}
-  issuer: user-service
-  expiration: 604800  # 7天
-  refresh-threshold: 300
 
 logging:
   level:
