@@ -9,11 +9,11 @@ WORKDIR /app
 COPY gateway/settings.xml /root/.m2/settings.xml
 COPY pom.xml .
 COPY gateway/pom.xml gateway/
-RUN mvn dependency:go-offline -B -f gateway/pom.xml || true
+RUN mvn dependency:resolve -B -f gateway/pom.xml
 
 # 打包，-o 离线模式
 COPY gateway/src gateway/src/
-RUN mvn clean package -DskipTests -B -o -f gateway/pom.xml
+RUN mvn clean package -DskipTests -B -f gateway/pom.xml
 
 # 运行阶段（使用更小的 JRE 镜像）
 FROM eclipse-temurin:21-jre-alpine
