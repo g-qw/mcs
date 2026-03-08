@@ -208,7 +208,7 @@ CREATE INDEX idx_share_code ON resource_share(code);
 
 CREATE TABLE share_item (
     id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    share_id        UUID NOT NULL REFERENCES share(id) ON DELETE CASCADE,
+    share_id        UUID NOT NULL REFERENCES resource_share(id) ON DELETE CASCADE,
     resource_type   VARCHAR(32) NOT NULL CHECK (resource_type IN ('FILE', 'DIRECTORY')),
     resource_id     UUID NOT NULL
 );
