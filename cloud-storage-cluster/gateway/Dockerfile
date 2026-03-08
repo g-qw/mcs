@@ -11,7 +11,7 @@ COPY pom.xml .
 COPY gateway/pom.xml gateway/
 RUN mvn dependency:resolve -B -f gateway/pom.xml
 
-# 打包，-o 离线模式
+# 复制源码并打包
 COPY gateway/src gateway/src/
 RUN mvn clean package -DskipTests -B -f gateway/pom.xml
 
