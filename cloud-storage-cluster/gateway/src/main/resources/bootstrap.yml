@@ -1,8 +1,0 @@
-spring:
-  application:
-    name: gateway
-  cloud:
-    nacos:
-      discovery:
-        service: gateway
-        namespace: 9b73010a-162b-4933-8fa1-4549319b8a8d
