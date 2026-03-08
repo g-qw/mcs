@@ -33,10 +33,10 @@ COPY --from=builder /app/user-service/target/user-service-*.jar app.jar
 EXPOSE 8100
 
 HEALTHCHECK --interval=30s \
-            --timeout=5s \
-            --start-period=30s \
+            --timeout=10s \
+            --start-period=60s \
             --retries=3 \
-            CMD sh -c 'echo > /dev/tcp/localhost/8100' 2>/dev/null || exit 1
+            CMD wget -qO- http://127.0.0.1:8100/actuator/health > /dev/null || exit 1
 
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \
