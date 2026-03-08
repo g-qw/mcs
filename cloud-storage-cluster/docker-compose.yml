@@ -98,6 +98,8 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      TZ: Asia/Shanghai
+      JAVA_OPTS: "-XX:MaxRAMPercentage=60.0 -XX:MaxMetaspaceSize=64m -Xss256k"
     ports:
       - "75:75"
     volumes:
