@@ -24,6 +24,11 @@ WORKDIR /app
 COPY --from=builder /app/gateway/target/gateway-*.jar app.jar
 
 ENV TZ=Asia/Shanghai
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=50.0 \
+    -XX:InitialRAMPercentage=50.0 \
+    -XX:MaxMetaspaceSize=128m \
+    -Xss256k"
+
 EXPOSE 75
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
@@ -31,5 +36,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \
-    "-Dspring.profile.active=prod", \
+    "-Dspring.profiles.active=prod", \
     "-jar", "app.jar"]
