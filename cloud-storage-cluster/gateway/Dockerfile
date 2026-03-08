@@ -1,23 +1,24 @@
 # 构建阶段
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
 
-# 复制 Maven 构建文件（利用 Docker 缓存层）
+# 先复制 pom.xml 单独下载依赖（利用 Docker 缓存层）
 COPY pom.xml .
+
+# 下载依赖到本地仓库
+RUN mvn dependency:go-offline -B
+
+# 复制源码
 COPY src ./src
 
-# 打包（跳过测试加速构建）
-RUN apk add --no-cache maven && \
-    mvn clean package -DskipTests
+# 打包，-o 离线模式
+RUN mvn clean package -DskipTests -B -o
 
 # 运行阶段（使用更小的 JRE 镜像）
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
-
-# 创建日志目录
-RUN mkdir -p /app/logs
 
 # 从构建阶段复制 JAR
 COPY --from=builder /app/target/gateway-*.jar app.jar
@@ -30,10 +31,9 @@ EXPOSE 75
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:75/actuator/health || exit 1
+    CMD sh -c 'echo > /dev/tcp/localhost/75' 2>/dev/null || exit 1
 
-# 启动命令
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \
-    "-Dspring.profiles.active=prod", \
+    "-Dspring.profile.active=prod", \
     "-jar", "app.jar"]
