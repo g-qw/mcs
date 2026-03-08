@@ -4,7 +4,7 @@
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
-COPY gateway/settings.xml /root/.m2/settings.xml
+COPY settings.xml /root/.m2/settings.xml
 COPY pom.xml .
 COPY gateway/pom.xml gateway/
 RUN mvn dependency:resolve -B -f gateway/pom.xml

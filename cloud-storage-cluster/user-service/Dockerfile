@@ -3,7 +3,7 @@
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
-COPY user-service/settings.xml /root/.m2/settings.xml
+COPY settings.xml /root/.m2/settings.xml
 COPY pom.xml .
 COPY dubbo-api/pom.xml dubbo-api/
 COPY dubbo-api/src dubbo-api/src/
