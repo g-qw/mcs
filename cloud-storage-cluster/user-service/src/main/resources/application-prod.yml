@@ -43,7 +43,7 @@ dubbo:
     name: ${spring.application.name}-dubbo
     qos-enable: false
   registry:
-    address: nacos://${spring.cloud.nacos.discovery.server-addr}?namespace=${spring.cloud.nacos.discovery.namespace}
+    address: nacos://${spring.cloud.nacos.discovery.server-addr}
     register-mode: instance
   consumer:
     timeout: 3000
