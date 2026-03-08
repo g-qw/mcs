@@ -3,13 +3,20 @@
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
+
+# 复制 Maven 配置
 COPY settings.xml /root/.m2/settings.xml
+
+# 复制父项目 pom.xml 并安装到本地仓库
 COPY pom.xml .
+RUN mvn install -N -DskipTests -B
+
+# 复制并安装 dubbo-api
 COPY dubbo-api/pom.xml dubbo-api/
 COPY dubbo-api/src dubbo-api/src/
 RUN mvn clean install -DskipTests -B -f dubbo-api/pom.xml
 
-# 复制 user-service 的 pom.xml 并解析依赖
+# 解析 user-service 的依赖
 COPY user-service/pom.xml user-service/
 RUN mvn dependency:resolve -B -f user-service/pom.xml
 

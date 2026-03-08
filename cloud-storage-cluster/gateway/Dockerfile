@@ -4,12 +4,20 @@
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
+
+# 复制 Maven 配置
 COPY settings.xml /root/.m2/settings.xml
+
+# 复制父项目 pom.xml
 COPY pom.xml .
+
+# 复制 gateway 的 pom.xml
 COPY gateway/pom.xml gateway/
+
+# 解析 gateway 的依赖
 RUN mvn dependency:resolve -B -f gateway/pom.xml
 
-# 复制源码并打包
+# 复制 gateway 源码并打包
 COPY gateway/src gateway/src/
 RUN mvn clean package -DskipTests -B -f gateway/pom.xml
 
