@@ -9,14 +9,6 @@
         <relativePath/>
     </parent>
 
-    <modules>
-        <module>gateway</module>
-        <module>user-service</module>
-        <module>file-system</module>
-        <module>storage-service</module>
-        <module>dubbo-api</module>
-    </modules>
-
     <groupId>org.cloud</groupId>
     <artifactId>cloud-storage-cluster</artifactId>
     <version>0.0.1-SNAPSHOT</version>

@@ -1,4 +1,4 @@
-# 构建命令
+# 构建命令，在父项目的根目录运行：docker build -t gateway -f gateway/Dockerfile .
 
 # 构建阶段
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
