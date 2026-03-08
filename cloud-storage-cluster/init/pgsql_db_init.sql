@@ -210,7 +210,7 @@ CREATE TABLE share_item (
     id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     share_id        UUID NOT NULL REFERENCES share(id) ON DELETE CASCADE,
     resource_type   VARCHAR(32) NOT NULL CHECK (resource_type IN ('FILE', 'DIRECTORY')),
-    resource_id     UUID NOT NULL,
+    resource_id     UUID NOT NULL
 );
 COMMENT ON TABLE share_item IS '分享资源项表：存储分享链接包含的具体文件或目录';
 COMMENT ON COLUMN share_item.id IS '自增主键ID';
