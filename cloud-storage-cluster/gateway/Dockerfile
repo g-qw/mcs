@@ -6,6 +6,7 @@ FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
 # 下载依赖到本地仓库，-f 指定文件，不检查 reactor
+COPY gateway/settings.xml /root/.m2/settings.xml
 COPY pom.xml .
 COPY gateway/pom.xml gateway/
 RUN mvn dependency:go-offline -B -f gateway/pom.xml || true
