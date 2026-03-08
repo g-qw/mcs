@@ -222,7 +222,7 @@ CREATE INDEX idx_share_item_share_id ON share_item(share_id);
 
 CREATE TABLE share_access (
     id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    share_id        UUID NOT NULL REFERENCES share(id) ON DELETE CASCADE,
+    share_id        UUID NOT NULL REFERENCES resource_share(id) ON DELETE CASCADE,
     user_id         UUID NOT NULL,
     viewed          BOOLEAN NOT NULL DEFAULT FALSE
 );
