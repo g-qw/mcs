@@ -167,6 +167,8 @@ volumes:
     driver: local
   gateway_logs:
     driver: local
+  user_logs:
+    driver: local
 
 # 网络配置
 networks:
