@@ -94,7 +94,6 @@ services:
     build:
       context: .
       dockerfile: gateway/Dockerfile
-    image: gateway:latest
     container_name: gateway
     restart: unless-stopped
     environment:
@@ -125,7 +124,6 @@ services:
     build:
       context: .
       dockerfile: user-service/Dockerfile
-    image: user-service:latest
     container_name: user-service
     restart: unless-stopped
     environment:
