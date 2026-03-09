@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/cloud_storage_cluster
+    url: jdbc:postgresql://postgres:5432/cloud_storage_cluster
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -21,6 +21,8 @@ spring:
       port: 6379
       password: ${REDIS_PASSWORD}
       database: 2
+  codec:
+    max-in-memory-size: 32MB
 
 dubbo:
   application:
@@ -35,6 +37,28 @@ dubbo:
   protocol:
     name: dubbo
     port: -1
+
+minio:
+  access-key: ${MINIO_ACCESS_KEY:}
+  secret-key: ${MINIO_SECRET:}
+
+transfer:
+  multi-file-config:
+    memory-threshold: 5242880
+    stream-threshold: 104857600
+    file-timeout-minutes: 5
+    batch-timeout-minutes: 10
+    stream-prefetch: 4
+    overflow-strategy: "DROP_OLDEST"
+  chunked-upload-config:
+    max-chunk-size-bytes: 104857600
+    chunk-timeout-minutes: 1
+  download-config:
+    stream-buffer-size-bytes: 16384
+    max-chunk-size-bytes: 5120
+    max-zip-batch-size-bytes: 1073741824
+    zip-packaging-timeout-minutes: 10
+
 
 gateway:
   port: 75

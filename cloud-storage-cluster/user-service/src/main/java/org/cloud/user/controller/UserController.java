@@ -27,13 +27,6 @@ public class UserController {
     private final UserService userService;
     private final EmailService emailService;
 
-    @GetMapping("/health")
-    @Operation(summary = "健康检查", description = "检查服务Controller层是否可用，返回UP表示正常")
-    @Hidden
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("UP");
-    }
-
     @PostMapping("/verify")
     @Operation(summary = "邮箱验证", description = "用于注册、登录、修改密码等等的邮箱验证")
     public ApiResponse<Void> verify(@RequestBody @Validated EmailRequest request) {
@@ -42,7 +35,7 @@ public class UserController {
     }
 
     @Operation(summary = "检查邮箱是否已注册", description = "验证邮箱是否已被注册")
-    @GetMapping("/check-email")
+    @PostMapping("/check-email")
     public ApiResponse<Boolean> isRegistered(@RequestBody @Validated EmailRequest request) {
         return ApiResponse.success(userService.isRegistered(request.getEmail()));
     }

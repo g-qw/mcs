@@ -2,68 +2,18 @@ server:
   port: 8102
 
 spring:
-  main:
-    web-application-type: reactive
   application:
     name: storage-service
-  datasource:
-    url: jdbc:postgresql://localhost:5432/cloud_storage_cluster
-    username: postgres
-    password: ${DB_PWD:postgres}
-    driver-class-name: org.postgresql.Driver
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-  data:
-    redis:
-      host: 127.0.0.1
-      port: 6379
-      password: ${REDIS_PWD:}
-      database: 1
-  codec:
-    max-in-memory-size: 32MB
-
-dubbo:
-  application:
-    name: ${spring.application.name}-dubbo
-    qos-enable: false
-  registry:
-    address: nacos://localhost:8848?namespace=${spring.cloud.nacos.discovery.namespace}
-    register-mode: instance
-  consumer:
-    timeout: 3000
-    check: false
-  protocol:
-    name: dubbo
-    port: -1
-
-minio:
-  access-key: ${MINIO_ACCESS_KEY:}
-  secret-key: ${MINIO_SECRET:}
+  main:
+    web-application-type: reactive
+  profiles:
+    default: dev
 
 springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
     display-request-duration: true
-
-transfer:
-  multi-file-config:
-    memory-threshold: 5242880
-    stream-threshold: 104857600
-    file-timeout-minutes: 5
-    batch-timeout-minutes: 10
-    stream-prefetch: 4
-    overflow-strategy: "DROP_OLDEST"
-  chunked-upload-config:
-    max-chunk-size-bytes: 104857600
-    chunk-timeout-minutes: 1
-  download-config:
-    stream-buffer-size-bytes: 16384
-    max-chunk-size-bytes: 5120
-    max-zip-batch-size-bytes: 1073741824
-    zip-packaging-timeout-minutes: 10
 
 logging:
   level:

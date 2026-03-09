@@ -100,7 +100,11 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       TZ: Asia/Shanghai
-      JAVA_OPTS: "-XX:MaxRAMPercentage=60.0 -XX:MaxMetaspaceSize=64m -Xss256k"
+      JAVA_OPTS: >-
+        -XX:MaxRAMPercentage=60.0
+        -XX:MaxMetaspaceSize=64m
+        -Xss256k
+
     ports:
       - "75:75"
     volumes:
@@ -116,9 +120,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1GB
         reservations:
-          memory: 256M
+          memory: 512M
 
   user-service:
     build:
@@ -134,7 +138,10 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       TZ: Asia/Shanghai
-      JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -XX:MaxMetaspaceSize=128m -Xss512k"
+      JAVA_OPTS: >-
+        -XX:MaxRAMPercentage=75.0
+        -XX:MaxMetaspaceSize=128m
+        -Xss512k
     ports:
       - "8100:8100"
     volumes:
@@ -152,9 +159,86 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1GB
         reservations:
-          memory: 256M
+          memory: 512M
+
+  file-system:
+    build:
+      context: .
+      dockerfile: file-system/Dockerfile
+    container_name: file-system
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      TZ: Asia/Shanghai
+      JAVA_OPTS: >-
+        -XX:MaxRAMPercentage=75.0
+        -XX:MaxMetaspaceSize=128m
+        -Xss512k
+    ports:
+      - "8101:8101"
+    volumes:
+      - fs_logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - backend-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1GB
+        reservations:
+          memory: 512M
+
+  storage-service:
+    build:
+      context: .
+      dockerfile: storage-service/Dockerfile
+    container_name: storage-service
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      TZ: Asia/Shanghai
+      JAVA_OPTS: >-
+        -XX:MaxRAMPercentage=25.0
+        -XX:MaxDirectMemorySize=2g
+        -Dreactor.netty.ioWorkerCount=16
+    ports:
+      - "8102:8102"
+    volumes:
+      - storage_logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - backend-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 4GB
+        reservations:
+          memory: 1GB
 
 # 数据卷定义
 volumes:
@@ -169,6 +253,10 @@ volumes:
   gateway_logs:
     driver: local
   user_logs:
+    driver: local
+  fs_logs:
+    driver: local
+  storage_logs:
     driver: local
 
 # 网络配置

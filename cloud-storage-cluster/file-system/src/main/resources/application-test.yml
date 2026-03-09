@@ -1,67 +1,40 @@
 spring:
-  application:
-    name: file-system
   datasource:
     url: jdbc:postgresql://localhost:5432/cloud_storage_cluster
-    username: postgres
-    password: ${DB_PWD:postgres}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   cloud:
     nacos:
       discovery:
+        service: ${spring.application.name}
         server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yaml
+        group: DEFAULT_GROUP
+        import-check:
+          enabled: false
   data:
     redis:
       host: 127.0.0.1
       port: 6379
-      password: ${REDIS_PWD:}
-      database: 1
-
-jimmer:
-  dialect: org.babyfish.jimmer.sql.dialect.PostgresDialect
-  show-sql: true
-  pretty-sql: true
-  client:
-    ts:
-      path: /ts.zip
-    openapi:
-      path: /openapi.json
-      ui-path: /openapi.html
-      properties:
-        info:
-          title: Minio 虚拟文件系统
-          description: 存储 Minio 中的文件对象的元数据和结构数据
-          version: 1.0
+      password: ${REDIS_PASSWORD}
+      database: 2
 
 dubbo:
   application:
     name: ${spring.application.name}-dubbo
     qos-enable: false
   registry:
-    address: nacos://${spring.cloud.nacos.discovery.server-addr}?namespace=${spring.cloud.nacos.discovery.namespace}
+    address: nacos://${spring.cloud.nacos.discovery.server-addr}
     register-mode: instance
+  consumer:
+    timeout: 3000
+    check: false
   protocol:
     name: dubbo
     port: -1
 
-springdoc:
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-    display-request-duration: true
-
-# 日志配置
-logging:
-  level:
-    root: INFO
-    org.cloud.fs.service: DEBUG
-
-    # 关闭远程方法调用日志
-    sun.rmi: OFF
-    javax.management.remote.rmi: OFF
-
-    # 数据库日志：连接泄漏、慢 SQL、超时
-    com.zaxxer.hikari: WARN
-    com.zaxxer.hikari.HikariConfig: INFO
-    org.springframework.jdbc: DEBUG
-    org.springframework.jdbc.datasource.DataSourceUtils: INFO
+gateway:
+  port: 75

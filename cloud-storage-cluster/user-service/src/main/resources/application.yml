@@ -2,10 +2,10 @@ server:
   port: 8100
 
 spring:
-  profiles:
-    active: dev
   application:
     name: user-service
+  profiles:
+    active: dev
 
 jimmer:
   dialect: org.babyfish.jimmer.sql.dialect.PostgresDialect

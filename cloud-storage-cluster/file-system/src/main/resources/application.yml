@@ -2,8 +2,42 @@ server:
   port: 8101
 
 spring:
+  application:
+    name: file-system
   profiles:
     default: dev
+
+jimmer:
+  dialect: org.babyfish.jimmer.sql.dialect.PostgresDialect
+  show-sql: true
+  pretty-sql: true
+  client:
+    ts:
+      path: /ts.zip
+    openapi:
+      path: /openapi.json
+      ui-path: /openapi.html
+      properties:
+        info:
+          title: Minio 虚拟文件系统
+          description: 存储文件对象的元数据和目录数据
+          version: 1.0
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    display-request-duration: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
 
 # 日志配置
 logging:
