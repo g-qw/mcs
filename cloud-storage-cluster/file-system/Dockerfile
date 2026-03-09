@@ -12,17 +12,17 @@ COPY settings.xml /root/.m2/settings.xml
 
 # 复制父项目 pom.xml 并安装到本地仓库
 COPY pom.xml .
-RUN mvn install -N -DskipTests -B -T 1C
+RUN mvn install -N -DskipTests -B
 
 # 复制并安装 dubbo-api
 COPY dubbo-api/pom.xml dubbo-api/
 COPY dubbo-api/src dubbo-api/src/
-RUN mvn clean install -DskipTests -B -T 1C -f dubbo-api/pom.xml
+RUN mvn clean install -DskipTests -B -f dubbo-api/pom.xml
 
 # 预下载 file-system 的依赖
 COPY file-system/pom.xml file-system/
-RUN mvn dependency:go-offline -B -T 1C -f file-system/pom.xml || \
-    mvn dependency:resolve -B -T 1C -f file-system/pom.xml
+RUN mvn dependency:go-offline -B -f file-system/pom.xml || \
+    mvn dependency:resolve -B -f file-system/pom.xml
 
 # ==========================================
 # 阶段 2: 编译构建（仅源码变更时触发）
@@ -31,7 +31,7 @@ FROM deps-cache AS builder
 
 # 复制 file-system 源码并打包
 COPY file-system/src file-system/src
-RUN mvn clean package -DskipTests -B -T 1C -o -f file-system/pom.xml
+RUN mvn clean package -DskipTests -B -o -f file-system/pom.xml
 
 # ==========================================
 # 阶段 3: 运行时（精简镜像）
