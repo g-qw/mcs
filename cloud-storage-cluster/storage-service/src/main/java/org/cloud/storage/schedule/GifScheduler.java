@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -37,7 +36,6 @@ public class GifScheduler {
     private final MediaCoverRepository mediaCoverRepository;
     private final MinioProperties minioProperties;
     private final MinioClient minioClient;
-    private final ThreadPoolTaskExecutor taskExecutor;
 
     private final AtomicBoolean processing = new AtomicBoolean(false);
     private static Path TEMP_DIR = Paths.get("tmp");
@@ -51,7 +49,7 @@ public class GifScheduler {
         }
     }
 
-    @Scheduled(initialDelay = 13, fixedDelay = 900, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(initialDelay = 13, fixedDelay = 300, timeUnit = TimeUnit.SECONDS)
     public void batchProcessGifTask() {
         if (!processing.compareAndSet(false, true)) {
             return;

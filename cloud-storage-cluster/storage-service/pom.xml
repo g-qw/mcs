@@ -92,12 +92,36 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
-        <!-- Source: https://mvnrepository.com/artifact/org.bytedeco/javacv-platform -->
+        <!-- Source: https://mvnrepository.com/artifact/org.bytedeco/javacv -->
         <dependency>
             <groupId>org.bytedeco</groupId>
-            <artifactId>javacv-platform</artifactId>
-            <version>${javacv-platform.version}</version>
+            <artifactId>javacv</artifactId>
+            <version>${javacv.version}</version>
             <scope>compile</scope>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/org.bytedeco/ffmpeg -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${ffmpeg.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${ffmpeg.version}</version>
+            <classifier>linux-x86_64</classifier>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>${ffmpeg.version}</version>
+            <classifier>windows-x86_64</classifier>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Source: https://mvnrepository.com/artifact/com.madgag/animated-gif-lib -->

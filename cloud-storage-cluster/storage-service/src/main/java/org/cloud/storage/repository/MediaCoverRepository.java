@@ -30,6 +30,7 @@ public class MediaCoverRepository extends AbstractJavaRepository<MediaCover, Lon
         return sql.createQuery(table)
                 .where(table.fileId().in(fileIds))
                 .where(table.userId().eq(userId))
+                .orderBy(table.updatedAt())
                 .select(table)
                 .execute();
     }

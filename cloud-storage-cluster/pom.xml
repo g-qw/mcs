@@ -63,7 +63,8 @@
         <freemarker.version>2.3.34</freemarker.version>
         <okhttp.version>4.12.0</okhttp.version>
         <tika.version>2.9.2</tika.version>
-        <javacv-platform.version>1.5.12</javacv-platform.version>
+        <javacv.version>1.5.12</javacv.version>
+        <ffmpeg.version>7.1.1-1.5.12</ffmpeg.version>
         <animated-gif-lib.version>1.4</animated-gif-lib.version>
         <thumbnailator.version>0.4.20</thumbnailator.version>
         <webp-imageio.version>0.1.6</webp-imageio.version>

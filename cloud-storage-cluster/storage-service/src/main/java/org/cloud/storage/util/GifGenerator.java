@@ -74,8 +74,6 @@ public class GifGenerator {
                 return null;
             }
 
-            log.info(output);
-
             // 解析: width,height,duration
             String[] parts = output.split(",");
             if(parts.length < 3) {
