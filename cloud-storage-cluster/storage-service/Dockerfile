@@ -1,5 +1,6 @@
 # 构建容器命令，在父项目的根目录运行：docker build -t storage-service -f storage-service/Dockerfile .
 
+# 构建阶段
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
@@ -7,20 +8,20 @@ WORKDIR /app
 # 复制 Maven 配置
 COPY settings.xml /root/.m2/settings.xml
 
-# 复制父项目 pom.xml 并安装到本地仓库
+# 父 pom.xml
 COPY pom.xml .
 RUN mvn install -N -DskipTests -B
 
-# 复制并安装 dubbo-api
+# dubbo-api
 COPY dubbo-api/pom.xml dubbo-api/
 COPY dubbo-api/src dubbo-api/src/
 RUN mvn clean install -DskipTests -B -f dubbo-api/pom.xml
 
-# 解析 storage-service 的依赖
+# storage-service 依赖
 COPY storage-service/pom.xml storage-service/
 RUN mvn dependency:resolve -B -f storage-service/pom.xml
 
-# 复制 storage-service 源码并打包
+# storage-service 源码
 COPY storage-service/src storage-service/src
 RUN mvn clean package -DskipTests -B -f storage-service/pom.xml
 

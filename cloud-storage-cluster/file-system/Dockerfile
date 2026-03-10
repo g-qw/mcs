@@ -1,5 +1,6 @@
 # 构建容器命令，在父项目的根目录运行：docker build -t file-system -f file-system/Dockerfile .
 
+# 构建阶段
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
@@ -25,6 +26,7 @@ COPY file-system/src file-system/src
 RUN mvn clean package -DskipTests -B -f file-system/pom.xml
 
 
+# 运行阶段
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
 WORKDIR /app

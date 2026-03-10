@@ -109,6 +109,7 @@ services:
       - "75:75"
     volumes:
       - gateway_logs:/app/logs
+      - ./gateway/src/main/resources/application-prod.yml:/app/application-prod.yml:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
       - backend-network
@@ -146,6 +147,7 @@ services:
       - "8100:8100"
     volumes:
       - user_logs:/app/logs
+      - ./user-service/src/main/resources/application-prod.yml:/app/application-prod.yml:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
       - backend-network
@@ -183,6 +185,7 @@ services:
       - "8101:8101"
     volumes:
       - fs_logs:/app/logs
+      - ./file-system/src/main/resources/application-prod.yml:/app/application-prod.yml:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
       - backend-network
@@ -222,6 +225,7 @@ services:
       - "8102:8102"
     volumes:
       - storage_logs:/app/logs
+      - ./storage-service/src/main/resources/application-prod.yml:/app/application-prod.yml:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
       - backend-network
