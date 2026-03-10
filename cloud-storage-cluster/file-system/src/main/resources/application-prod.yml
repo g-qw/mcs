@@ -6,11 +6,12 @@ spring:
     driver-class-name: org.postgresql.Driver
   cloud:
     nacos:
+      server-addr: nacos:8848
       discovery:
         service: ${spring.application.name}
-        server-addr: nacos:8848
+        ip: file-system
+        port: ${server.port}
       config:
-        server-addr: nacos:8848
         file-extension: yaml
         group: DEFAULT_GROUP
         import-check:
