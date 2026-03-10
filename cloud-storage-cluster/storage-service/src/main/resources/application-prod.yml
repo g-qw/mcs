@@ -9,8 +9,6 @@ spring:
       server-addr: nacos:8848
       discovery:
         service: ${spring.application.name}
-        ip: file-system
-        port: ${server.port}
       config:
         file-extension: yaml
         group: DEFAULT_GROUP
@@ -31,7 +29,7 @@ dubbo:
     name: ${spring.application.name}-dubbo
     qos-enable: false
   registry:
-    address: nacos://localhost:8848?namespace=${spring.cloud.nacos.discovery.namespace}
+    address: nacos://${spring.cloud.nacos.server-addr}
     register-mode: instance
   consumer:
     timeout: 3000

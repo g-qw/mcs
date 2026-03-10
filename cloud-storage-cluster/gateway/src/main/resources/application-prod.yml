@@ -4,8 +4,6 @@ spring:
       server-addr: nacos:8848
       discovery:
         service: ${spring.application.name}
-        ip: file-system
-        port: ${server.port}
       config:
         file-extension: yaml
         group: DEFAULT_GROUP

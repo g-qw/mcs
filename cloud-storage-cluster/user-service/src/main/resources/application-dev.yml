@@ -6,11 +6,10 @@ spring:
     driver-class-name: org.postgresql.Driver
   cloud:
     nacos:
+      server-addr: 127.0.0.1:8848
       discovery:
         service: ${spring.application.name}
-        server-addr: 127.0.0.1:8848
       config:
-        server-addr: 127.0.0.1:8848
         file-extension: yaml
         group: DEFAULT_GROUP
         import-check:
@@ -43,7 +42,7 @@ dubbo:
     name: ${spring.application.name}-dubbo
     qos-enable: false
   registry:
-    address: nacos://${spring.cloud.nacos.discovery.server-addr}
+    address: nacos://${spring.cloud.nacos.server-addr}
     register-mode: instance
   consumer:
     timeout: 3000
