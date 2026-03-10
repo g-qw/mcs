@@ -8,19 +8,20 @@ WORKDIR /app
 # 复制 Maven 配置
 COPY settings.xml /root/.m2/settings.xml
 
-# 下载依赖
+# 父 pom.xml
 COPY pom.xml .
+RUN mvn install -N -DskipTests -B
+
+# dubbo-api
 COPY dubbo-api/pom.xml dubbo-api/
-COPY file-system/pom.xml file-system/
-
-# 下载所有依赖和插件
-RUN mvn dependency:go-offline dependency:resolve-plugins -B
-
-# 编译 dubbo-api
 COPY dubbo-api/src dubbo-api/src/
 RUN mvn clean install -DskipTests -B -f dubbo-api/pom.xml
 
-# 编译并打包 file-system
+# file-system 依赖
+COPY file-system/pom.xml file-system/
+RUN mvn dependency:resolve -B -f file-system/pom.xml
+
+# 编译打包
 COPY file-system/src file-system/src
 RUN mvn clean package -DskipTests -B -f file-system/pom.xml
 
