@@ -27,6 +27,11 @@ FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 COPY --from=builder /app/gateway/target/gateway-*.jar app.jar
 
+ENTRYPOINT ["java", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-Dspring.profiles.active=prod", \
+    "-jar", "app.jar"]
+
 EXPOSE 75
 
 HEALTHCHECK --interval=30s \
@@ -34,8 +39,3 @@ HEALTHCHECK --interval=30s \
            --start-period=60s \
            --retries=3 \
            CMD wget -qO- http://127.0.0.1:75/actuator/health > /dev/null || exit 1
-
-ENTRYPOINT ["java", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-Dspring.profiles.active=prod", \
-    "-jar", "app.jar"]

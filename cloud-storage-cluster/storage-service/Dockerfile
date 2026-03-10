@@ -29,18 +29,13 @@ RUN mvn clean package -DskipTests -B -f storage-service/pom.xml
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
 WORKDIR /app
+COPY --from=builder /app/storage-service/target/*.jar app.jar
 
-# 使用分层复制策略（利用Docker层缓存）
-COPY --from=builder /app/extracted/BOOT-INF/lib /app/lib/
-COPY --from=builder /app/extracted/META-INF /app/META-INF/
-COPY --from=builder /app/extracted/BOOT-INF/classes /app/classes/
-
-# 使用类路径启动
 ENTRYPOINT ["java", \
     "-Djava.security.egd=file:/dev/./urandom", \
     "-Dspring.profiles.active=prod", \
-    "-cp", "/app/lib/*:/app/classes:/app/META-INF", \
-    "org.cloud.storage.StorageServiceApplication"]
+    "-jar", \
+    "/app/app.jar"]
 
 EXPOSE 8102
 
