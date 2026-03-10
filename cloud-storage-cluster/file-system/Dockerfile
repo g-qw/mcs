@@ -25,7 +25,6 @@ RUN mvn dependency:resolve -B -f file-system/pom.xml
 COPY file-system/src file-system/src
 RUN mvn clean package -DskipTests -B -f file-system/pom.xml
 
-
 # 运行阶段
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
