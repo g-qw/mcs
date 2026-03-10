@@ -8,19 +8,21 @@ WORKDIR /app
 # 复制 Maven 配置
 COPY settings.xml /root/.m2/settings.xml
 
-# 依赖
+# 下载依赖
 COPY pom.xml .
 COPY dubbo-api/pom.xml dubbo-api/
 COPY file-system/pom.xml file-system/
-RUN mvn dependency:go-offline -B -DexcludeArtifactIds=dubbo-api
 
-# dubbo-api
+# 下载所有依赖和插件
+RUN mvn dependency:go-offline dependency:resolve-plugins -B
+
+# 编译 dubbo-api
 COPY dubbo-api/src dubbo-api/src/
-RUN mvn clean install -DskipTests -B -o -f dubbo-api/pom.xml
+RUN mvn clean install -DskipTests -B -f dubbo-api/pom.xml
 
-# file-system 源码
+# 编译并打包 file-system
 COPY file-system/src file-system/src
-RUN mvn clean package -DskipTests -B -o -f file-system/pom.xml
+RUN mvn clean package -DskipTests -B -f file-system/pom.xml
 
 # 运行阶段
 FROM eclipse-temurin:21-jre-alpine AS runtime
