@@ -190,6 +190,63 @@ public class DirectoryRepository extends AbstractJavaRepository<Directory, UUID>
                 ).fetchOneOrNull();
     }
 
+    public List<Directory> getDirectoryPath(UUID directoryId, UUID userId) {
+        List<Directory> pathNodes = new LinkedList<>();
+
+        // 查询起始目录（当前目录）
+        Directory currentDirectory = sql.createQuery(table)
+                .where(table.id().eq(directoryId))
+                .where(table.userId().eq(userId))
+                .select(
+                        table.fetch(
+                                DirectoryFetcher.$.allScalarFields()
+                                        .parentId()
+                                        .parent(false)
+                                        .directories(false)
+                                        .files(false)
+                        )
+                )
+                .fetchOneOrNull();
+
+        if (currentDirectory == null) {
+            return List.of();
+        }
+
+        // 自关联向上遍历父目录链
+        pathNodes.addFirst(currentDirectory);
+        for (int depth = 0; depth < 64; depth++) {
+            Directory currentNode = pathNodes.getFirst();
+
+            // 到达根目录（parentId 为 null），停止遍历
+            if (currentNode.parentId() == null) {
+                break;
+            }
+
+            // 查询父目录
+            Directory parentDirectory = sql.createQuery(table)
+                    .where(table.id().eq(currentNode.parentId()))
+                    .select(
+                            table.fetch(
+                                    DirectoryFetcher.$.allScalarFields()
+                                            .parentId()
+                                            .parent(false)
+                                            .directories(false)
+                                            .files(false)
+                            )
+                    )
+                    .fetchOne();
+
+            // 父目录不存在时中断（数据一致性异常）
+            if (parentDirectory == null) {
+                break;
+            }
+
+            pathNodes.addFirst(parentDirectory);
+        }
+
+        return pathNodes;
+    }
+
     /**
      * 获取指定目录的所有后代目录 id
      */

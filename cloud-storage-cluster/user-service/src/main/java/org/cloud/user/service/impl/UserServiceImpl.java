@@ -18,6 +18,8 @@ import org.cloud.user.util.jwt.JwtProvider;
 import org.cloud.user.util.secure.impl.BcryptPasswordHasher;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -129,12 +131,17 @@ public class UserServiceImpl implements UserService {
         RBucket<Long> versionBucket = redissonClient.getBucket(USER_TOKEN_VERSION_PREFIX + user.id());
         versionBucket.set(tokenVersion, Duration.ofSeconds(jwtProperties.getExpiration()));
 
+        // 设置 Cookie
         String token = jwtProvider.generateToken(user.id().toString(), claims);
-        Cookie cookie = new Cookie("access_token", token);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) jwtProperties.getExpiration());
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("access_token", token)
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("None")
+                .path("/")
+                .maxAge(Duration.ofMillis(jwtProperties.getExpiration()))
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
 
         // 更新登录时间
         Long lastLoginAt = System.currentTimeMillis();

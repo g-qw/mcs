@@ -94,6 +94,14 @@ public class DirectoryController {
         return ApiResponse.success(directoryService.parsePath(request.getPath(), uid));
     }
 
+    @GetMapping("/{directoryId}/path")
+    @Operation(summary = "获取指定目录的路径", description = "获取从根目录到当前目录的完整层级结构，返回各级目录信息列表")
+    ApiResponse<List<Directory>> getDirectoryPath(
+            @Parameter(description = "目录 ID") @PathVariable UUID directoryId,
+            @Parameter(description = "用户 ID") @RequestHeader("UID") UUID uid) {
+        return ApiResponse.success(directoryService.getDirectoryPath(directoryId, uid));
+    }
+
     @GetMapping("/{directoryId}/node")
     @Operation(summary = "加载目录树数据", description = "返回目录节点数据，包含当前目录信息和直接子目录列表，用于逐级展开目录树")
     ApiResponse<DirectoryNode> getDirectoryNode(

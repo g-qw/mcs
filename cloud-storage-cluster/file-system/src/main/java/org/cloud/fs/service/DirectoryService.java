@@ -63,6 +63,11 @@ public interface DirectoryService {
     List<Directory> parsePath(String path, UUID userId);
 
     /**
+     * 获取指定目录的路径
+     */
+    List<Directory> getDirectoryPath(UUID directoryId, UUID userId);
+
+    /**
      * 获取目录树
      */
     DirectoryNode getDirectoryNode(UUID directoryId, UUID userId);

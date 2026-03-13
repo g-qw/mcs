@@ -320,6 +320,10 @@ public class DirectoryServiceImpl implements DirectoryService {
         return chain;
     }
 
+    public List<Directory> getDirectoryPath(UUID directoryId, UUID userId) {
+        return directoryRepository.getDirectoryPath(directoryId, userId);
+    }
+
     /**
      * 获取目录节点
      *
