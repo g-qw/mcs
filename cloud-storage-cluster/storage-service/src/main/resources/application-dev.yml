@@ -38,8 +38,10 @@ dubbo:
     port: -1
 
 minio:
+  endpoint: http://127.0.0.1:9000
   access-key: ${MINIO_ACCESS_KEY:}
   secret-key: ${MINIO_SECRET_KEY:}
+
 
 transfer:
   multi-file-config:

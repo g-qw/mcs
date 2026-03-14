@@ -123,7 +123,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                                         }
                                     }
                                 )
-                            ).switchIfEmpty(Mono.just(FileUploadResult.failure(filePart.name(), "文件上传失败")));
+                            ).switchIfEmpty(Mono.just(FileUploadResult.failure(filePart.filename(), "文件上传失败")));
                     },
                     cfg.getMaxConcurrency() // 并发度
                 )
@@ -367,7 +367,6 @@ public class FileUploadServiceImpl implements FileUploadService {
      * @return 上传结果
      */
     private Mono<FileInputDTO> memoryUpload(FilePart filePart, UUID directoryId, UUID userId) {
-        String filename = filePart.filename();
         String contentType = resolveContentType(filePart);
         String storageKey = StorageKeyGenerator.generateKey(userId);
 
@@ -386,7 +385,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                                 .build()
                         );
 
-                        return buildFileInputDTO(storageKey, directoryId, filename, contentType, resp.etag());
+                        return buildFileInputDTO(storageKey, directoryId, filePart.filename(), contentType, resp.etag());
                     }
                 }).subscribeOn(Schedulers.fromExecutor(taskExecutor));
             });
