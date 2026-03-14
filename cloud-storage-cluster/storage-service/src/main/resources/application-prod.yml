@@ -39,7 +39,7 @@ dubbo:
     port: -1
 
 minio:
-  endpoint: minio:9000
+  endpoint: http://minio:9000
   access-key: ${MINIO_ACCESS_KEY:}
   secret-key: ${MINIO_SECRET_KEY:}
 
