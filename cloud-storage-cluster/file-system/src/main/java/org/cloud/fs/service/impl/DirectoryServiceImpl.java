@@ -155,7 +155,7 @@ public class DirectoryServiceImpl implements DirectoryService {
      */
     @Override
     @Transactional
-    public boolean renameDirectory(UUID directoryId, String newName, UUID userId) throws AccessDeniedException{
+    public boolean renameDirectory(UUID directoryId, String newName, UUID userId) throws AccessDeniedException {
         // 检查目录名称是否合法
         if(newName.isEmpty()) {
             throw new InvalidDirectoryNameException(false, null);
@@ -320,7 +320,7 @@ public class DirectoryServiceImpl implements DirectoryService {
         return chain;
     }
 
-    public List<Directory> getDirectoryPath(UUID directoryId, UUID userId) {
+    public List<DirectoryInfoView> getDirectoryPath(UUID directoryId, UUID userId) {
         return directoryRepository.getDirectoryPath(directoryId, userId);
     }
 

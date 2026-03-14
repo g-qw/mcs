@@ -96,7 +96,7 @@ public class DirectoryController {
 
     @GetMapping("/{directoryId}/path")
     @Operation(summary = "获取指定目录的路径", description = "获取从根目录到当前目录的完整层级结构，返回各级目录信息列表")
-    ApiResponse<List<Directory>> getDirectoryPath(
+    ApiResponse<List<DirectoryInfoView>> getDirectoryPath(
             @Parameter(description = "目录 ID") @PathVariable UUID directoryId,
             @Parameter(description = "用户 ID") @RequestHeader("UID") UUID uid) {
         return ApiResponse.success(directoryService.getDirectoryPath(directoryId, uid));

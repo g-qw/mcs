@@ -6,6 +6,7 @@ import org.babyfish.jimmer.sql.JSqlClient;
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode;
 import org.babyfish.jimmer.sql.ast.query.MutableRootQuery;
 import org.babyfish.jimmer.sql.runtime.LogicalDeletedBehavior;
+import org.cloud.fs.dto.DirectoryInfoView;
 import org.cloud.fs.dto.DirectoryNodeView;
 import org.cloud.fs.dto.DirectorySpecification;
 import org.cloud.fs.dto.DirectoryView;
@@ -190,21 +191,15 @@ public class DirectoryRepository extends AbstractJavaRepository<Directory, UUID>
                 ).fetchOneOrNull();
     }
 
-    public List<Directory> getDirectoryPath(UUID directoryId, UUID userId) {
-        List<Directory> pathNodes = new LinkedList<>();
+    public List<DirectoryInfoView> getDirectoryPath(UUID directoryId, UUID userId) {
+        List<DirectoryInfoView> pathNodes = new LinkedList<>();
 
         // 查询起始目录（当前目录）
-        Directory currentDirectory = sql.createQuery(table)
+        DirectoryInfoView currentDirectory = sql.createQuery(table)
                 .where(table.id().eq(directoryId))
                 .where(table.userId().eq(userId))
                 .select(
-                        table.fetch(
-                                DirectoryFetcher.$.allScalarFields()
-                                        .parentId()
-                                        .parent(false)
-                                        .directories(false)
-                                        .files(false)
-                        )
+                        table.fetch(DirectoryInfoView.class)
                 )
                 .fetchOneOrNull();
 
@@ -215,24 +210,18 @@ public class DirectoryRepository extends AbstractJavaRepository<Directory, UUID>
         // 自关联向上遍历父目录链
         pathNodes.addFirst(currentDirectory);
         for (int depth = 0; depth < 64; depth++) {
-            Directory currentNode = pathNodes.getFirst();
+            DirectoryInfoView currentNode = pathNodes.getFirst();
 
             // 到达根目录（parentId 为 null），停止遍历
-            if (currentNode.parentId() == null) {
+            if (currentNode.getParentId() == null) {
                 break;
             }
 
             // 查询父目录
-            Directory parentDirectory = sql.createQuery(table)
-                    .where(table.id().eq(currentNode.parentId()))
+            DirectoryInfoView parentDirectory = sql.createQuery(table)
+                    .where(table.id().eq(currentNode.getParentId()))
                     .select(
-                            table.fetch(
-                                    DirectoryFetcher.$.allScalarFields()
-                                            .parentId()
-                                            .parent(false)
-                                            .directories(false)
-                                            .files(false)
-                            )
+                            table.fetch(DirectoryInfoView.class)
                     )
                     .fetchOne();
 

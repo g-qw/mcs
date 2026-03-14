@@ -10,12 +10,22 @@ DirectoryView {
     files {
         #allScalars(File)
         -userId
+        -storageKey
     }
 }
 
 DirectoryNodeView {
     id
     name
+}
+
+DirectoryInfoView {
+    id
+    parentId
+    name
+    createdAt
+    updatedAt
+    size
 }
 
 input DirectoryInput {

@@ -1,9 +1,6 @@
 package org.cloud.fs.service;
 import org.babyfish.jimmer.Page;
-import org.cloud.fs.dto.DirectoryInput;
-import org.cloud.fs.dto.DirectoryNode;
-import org.cloud.fs.dto.DirectorySpecification;
-import org.cloud.fs.dto.DirectoryView;
+import org.cloud.fs.dto.*;
 import org.cloud.fs.entity.Directory;
 import org.springframework.data.domain.PageRequest;
 
@@ -65,7 +62,7 @@ public interface DirectoryService {
     /**
      * 获取指定目录的路径
      */
-    List<Directory> getDirectoryPath(UUID directoryId, UUID userId);
+    List<DirectoryInfoView> getDirectoryPath(UUID directoryId, UUID userId);
 
     /**
      * 获取目录树
