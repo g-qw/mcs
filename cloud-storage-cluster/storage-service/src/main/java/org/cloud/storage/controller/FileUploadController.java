@@ -90,7 +90,7 @@ public class FileUploadController {
                 .map(ApiResponse::success);
     }
 
-    @PostMapping("/avatar")
+    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "上传用户头像", description = "上传用户头像图片，支持 JPG、PNG、GIF 格式，文件大小限制 1MB")
     public Mono<String> uploadAvatar(
             @Parameter(
