@@ -37,4 +37,9 @@ public interface FileUploadService {
      * 合并分片完成分片上传
      */
     Mono<FileInputDTO> completeMultipartUpload(String uploadId, UUID userId);
+
+    /**
+     * 上传头像
+     */
+    Mono<String> uploadAvatar(Mono<FilePart> filePart, UUID userId);
 }

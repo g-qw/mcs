@@ -15,6 +15,7 @@ import org.cloud.storage.config.minio.MinioProperties;
 import org.cloud.storage.config.transfer.FileTransferConfig;
 import org.cloud.storage.dto.*;
 import org.cloud.storage.dto.enums.TaskType;
+import org.cloud.storage.exception.AvatarUploadException;
 import org.cloud.storage.exception.MultipartUploadException;
 import org.cloud.storage.repository.FileProcessingTaskRepository;
 import org.cloud.storage.service.FileUploadService;
@@ -63,6 +64,7 @@ public class FileUploadServiceImpl implements FileUploadService {
     private static final String MULTIPART_UPLOAD_METADATA_PREFIX = "multipart:metadata:";
     private static final String MULTIPART_UPLOAD_PARTS_PREFIX = "multipart:parts:";
     private static final long MULTIPART_UPLOAD_EXPIRE_HOURS = 24L;
+    private static final long MAX_AVATAR_SIZE = 1024 * 1024;
 
     static {
         try {
@@ -313,6 +315,73 @@ public class FileUploadServiceImpl implements FileUploadService {
             log.error("[completeMultipartUpload] uploadId={}, storageKey={}, partCount={}, error={}",
                     uploadId, metadata.getStorageKey(), parts.length, e.getMessage());
             return Mono.error(new MultipartUploadException("文件合并失败，请稍后重试或重新上传"));
+        }
+    }
+
+    /**
+     * 上传头像文件
+     * 支持格式：JPEG, PNG, GIF, WebP
+     * 大小限制：< 1MB
+     */
+    @Override
+    public Mono<String> uploadAvatar(Mono<FilePart> filePart, UUID userId) {
+        final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
+                "image/jpeg", "image/png", "image/gif", "image/webp"
+        );
+
+        return filePart.flatMap(part -> {
+            // 检查文件大小
+            if (part.headers().getContentLength() > MAX_AVATAR_SIZE) {
+                return Mono.error(new AvatarUploadException(String.format("头像文件大小不能超过 %s MB", MAX_AVATAR_SIZE / 1024 / 1024)));
+            }
+
+            // 检查文件类型
+            String contentType = String.valueOf(part.headers().getContentType());
+            if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
+                return Mono.error(new AvatarUploadException("无效的图像格式，支持的格式包括 JPEG, PNG, GIF, WEBP"));
+            }
+
+            // 生成存储路径
+            String extension = getExtensionFromContentType(contentType);
+            String storageKey = StorageKeyGenerator.generateKey(userId) + "." + extension;
+
+            // 读取文件内容并上传
+            return DataBufferUtils.join(part.content()) // 加载到内存中
+                .flatMap(buffer -> {
+                    int size = buffer.readableByteCount();
+
+                    return Mono.fromCallable(() -> {
+                        try (InputStream stream = buffer.asInputStream(true)) {
+                            ObjectWriteResponse resp = minioClient.putObject(
+                                    PutObjectArgs.builder()
+                                            .bucket(minioProperties.getAvatarBucket())
+                                            .object(storageKey)
+                                            .stream(stream, size, -1)  // 用 buffer 的长度
+                                            .contentType(contentType)
+                                            .build()
+                            );
+
+                            log.info("[uploadAvatar] bucket={}, storageKey={}, filename={}, userId={}, size={} bytes, etag={}",
+                                    minioProperties.getAvatarBucket(), storageKey, part.filename(), userId, size, resp.etag());
+
+                            return String.format("%s/%s/%s", minioProperties.getEndpoint(), minioProperties.getAvatarBucket(), storageKey);
+                        }
+                    }).subscribeOn(Schedulers.fromExecutor(taskExecutor));
+                });
+
+        });
+    }
+
+    /**
+     * 根据ContentType获取文件扩展名
+     */
+    private String getExtensionFromContentType(String contentType) {
+        switch (contentType) {
+            case "image/jpeg": return "jpg";
+            case "image/png": return "png";
+            case "image/gif": return "gif";
+            case "image/webp": return "webp";
+            default: return "jpg";
         }
     }
 

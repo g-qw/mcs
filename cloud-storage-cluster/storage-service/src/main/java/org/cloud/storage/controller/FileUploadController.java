@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -87,5 +88,17 @@ public class FileUploadController {
         return fileUploadService.completeMultipartUpload(uploadId, uid)
                 .map(FileInputDTO::getMd5)
                 .map(ApiResponse::success);
+    }
+
+    @PostMapping("/avatar")
+    @Operation(summary = "上传用户头像", description = "上传用户头像图片，支持 JPG、PNG、GIF 格式，文件大小限制 1MB")
+    public Mono<String> uploadAvatar(
+            @Parameter(
+                    description = "头像文件",
+                    required = true,
+                    schema = @Schema(type = "string", format = "binary")
+            ) @RequestPart("file") Mono<FilePart> filePart,
+            @Parameter(description = "用户 ID") @RequestHeader(value = "UID") UUID uid) {
+        return fileUploadService.uploadAvatar(filePart, uid);
     }
 }

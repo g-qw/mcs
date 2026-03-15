@@ -3,6 +3,9 @@ package org.cloud.storage.controller;
 import javassist.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.storage.dto.ApiResponse;
+import org.cloud.storage.exception.AvatarUploadException;
+import org.cloud.storage.exception.BatchZipDownloadException;
+import org.cloud.storage.exception.FileRangeDownloadException;
 import org.cloud.storage.exception.MultipartUploadException;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -23,6 +26,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MultipartUploadException.class)
     @ResponseBody
     public Mono<ApiResponse<Void>> handleMultipartUploadException(MultipartUploadException e) {
+        return Mono.just(ApiResponse.failure(500, e.getMessage()));
+    }
+
+    @ExceptionHandler(FileRangeDownloadException.class)
+    @ResponseBody
+    public Mono<ApiResponse<Void>> handleFileRangeDownloadException(FileRangeDownloadException e) {
+        return Mono.just(ApiResponse.failure(500, e.getMessage()));
+    }
+
+
+    @ExceptionHandler(BatchZipDownloadException.class)
+    @ResponseBody
+    public Mono<ApiResponse<Void>> handleBatchZipDownloadExceptions(BatchZipDownloadException e) {
+        return Mono.just(ApiResponse.failure(500, e.getMessage()));
+    }
+
+    @ExceptionHandler(AvatarUploadException.class)
+    @ResponseBody
+    public Mono<ApiResponse<Void>> handle(AvatarUploadException e) {
         return Mono.just(ApiResponse.failure(500, e.getMessage()));
     }
 

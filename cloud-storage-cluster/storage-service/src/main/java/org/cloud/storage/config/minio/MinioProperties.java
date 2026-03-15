@@ -11,4 +11,5 @@ public class MinioProperties {
     private String secretKey;
     private String storageBucket = "default-storage";
     private String MidiaPreviewBucket = "media-preview";
+    private String AvatarBucket = "avatar";
 }
