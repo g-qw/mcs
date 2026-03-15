@@ -96,7 +96,10 @@ public class FileUploadController {
             @Parameter(
                     description = "头像文件",
                     required = true,
-                    schema = @Schema(type = "string", format = "binary")
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(type = "string", format = "binary")
+                    )
             ) @RequestPart("file") Mono<FilePart> filePart,
             @Parameter(description = "用户 ID") @RequestHeader(value = "UID") UUID uid) {
         return fileUploadService.uploadAvatar(filePart, uid);
